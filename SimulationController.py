@@ -1,5 +1,4 @@
 import enum
-from typing import Tuple
 import pygame
 
 class States(enum.Enum):
@@ -62,7 +61,7 @@ class SimulationController:
     def translate(self, vector) -> pygame.math.Vector2:
         return pygame.math.Vector2(vector.x, self.SCREEN_HEIGHT - vector.y)
     
-    def translateToPixel(self, vector) -> Tuple:
+    def translateToPixel(self, vector) -> tuple:
         v = pygame.math.Vector2(vector.x, self.SCREEN_HEIGHT - vector.y)
         return (int(v.x), int(v.y))
 
