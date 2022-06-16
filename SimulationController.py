@@ -1,4 +1,5 @@
 import enum
+from typing import Tuple
 import pygame
 
 class States(enum.Enum):
@@ -39,7 +40,7 @@ class SimulationController:
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
             pygame.draw.circle(self.screen, (0, 0, 255), (250, 250), 75)
-            self.screen.set_at((100, 100), (255, 255, 255))
+            self.screen.set_at(self.translateToPixel(pygame.math.Vector2(100, 100)), (255, 255, 255))
             pygame.display.flip()
 
     def stateSIMULATION(self) -> None:
@@ -57,6 +58,13 @@ class SimulationController:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     quit()
+
+    def translate(self, vector) -> pygame.math.Vector2:
+        return pygame.math.Vector2(vector.x, self.SCREEN_HEIGHT - vector.y)
+    
+    def translateToPixel(self, vector) -> Tuple:
+        v = pygame.math.Vector2(vector.x, self.SCREEN_HEIGHT - vector.y)
+        return (int(v.x), int(v.y))
 
     def run(self) -> None:
         self.stateMachine()
