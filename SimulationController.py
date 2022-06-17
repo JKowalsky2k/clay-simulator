@@ -2,6 +2,7 @@ import enum
 import pygame
 import CramerSolver
 import SetupTrajectory
+import Constants
 
 class States(enum.Enum):
     CONFIG = 0
@@ -12,18 +13,11 @@ class States(enum.Enum):
 class SimulationController:
     def __init__(self) -> None:
         pygame.init()
-        self.SCREEN_WIDTH = 500
-        self.SCREEN_HEIGHT = 500
 
         self.clock = pygame.time.Clock()
         self.FPS = 120
 
-        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
-        
-        self.ORANGE = (255, 165,   0)
-        self.RED    = (255,   0,   0)
-        self.WHITE  = (255, 255, 255)
-        self.BLACK  = (  0,   0,   0)
+        self.screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
 
         self.state = States.CONFIG
 
@@ -46,6 +40,8 @@ class SimulationController:
 
         trajectory = SetupTrajectory.Trajectory()
 
+        stage = 1
+
         while self.state == States.CONFIG:
             self.clock.tick(self.FPS)
             for event in pygame.event.get():
@@ -53,15 +49,33 @@ class SimulationController:
                     self.state = States.EXIT
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        print("LEFT")
+                        if stage == 1:
+                            stage = 2
+                        elif stage == 2:
+                            stage = 3
+                        elif stage == 3:
+                            stage = 4
+                        elif stage == 4:
+                            self.state = States.SIMULATION
                     elif event.button == 3:
                         print("RIGHT")
-            self.screen.fill(self.BLACK)
+            self.screen.fill(Constants.BLACK)
+            if stage == 1:
+                trajectory.setGroundLine(pygame.mouse.get_pos())
+            elif stage == 2:
+                trajectory.setStartClayPosition(pygame.mouse.get_pos())
+            elif stage == 3:
+                trajectory.setStopClayPosition(pygame.mouse.get_pos())
+            elif stage == 4:
+                trajectory.setApogeum(pygame.mouse.get_pos())
 
-            trajectory.setGroundLine(pygame.mouse.get_pos())
             trajectory.drawGroundLine(self.screen)
-            pygame.draw.circle(self.screen, (0, 0, 255), (250, 250), 75)
-            self.screen.set_at(self.translateToPixel(pygame.math.Vector2(100, 100)), (255, 255, 255))
+            if stage > 1:
+                trajectory.drawStartClayPosition(self.screen)
+            if stage > 2:
+                trajectory.drawStopClayPosition(self.screen)
+            if stage > 3:
+                trajectory.drawApogeum(self.screen)
             
             pygame.display.flip()
 
@@ -82,10 +96,10 @@ class SimulationController:
                     quit()
 
     def translate(self, vector) -> pygame.math.Vector2:
-        return pygame.math.Vector2(vector.x, self.SCREEN_HEIGHT - vector.y)
+        return pygame.math.Vector2(vector.x, Constants.SCREEN_HEIGHT - vector.y)
     
     def translateToPixel(self, vector) -> tuple:
-        v = pygame.math.Vector2(vector.x, self.SCREEN_HEIGHT - vector.y)
+        v = pygame.math.Vector2(vector.x, Constants.SCREEN_HEIGHT - vector.y)
         return (int(v.x), int(v.y))
 
     def run(self) -> None:
