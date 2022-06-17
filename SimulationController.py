@@ -1,5 +1,7 @@
 import enum
 import pygame
+import CramerSolver
+import SetupTrajectory
 
 class States(enum.Enum):
     CONFIG = 0
@@ -14,9 +16,14 @@ class SimulationController:
         self.SCREEN_HEIGHT = 500
 
         self.clock = pygame.time.Clock()
-        self.FPS = 60
+        self.FPS = 120
 
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+        
+        self.ORANGE = (255, 165,   0)
+        self.RED    = (255,   0,   0)
+        self.WHITE  = (255, 255, 255)
+        self.BLACK  = (  0,   0,   0)
 
         self.state = States.CONFIG
 
@@ -33,13 +40,29 @@ class SimulationController:
 
     def stateCONFIG(self) -> None:
         print(f"{self.state.name = }")
+
+        solver = CramerSolver.CramerSolver(pygame.math.Vector2(-2, 0), pygame.math.Vector2(4, 0), pygame.math.Vector2(1, 5))
+        print(solver.result())
+
+        trajectory = SetupTrajectory.Trajectory()
+
         while self.state == States.CONFIG:
             self.clock.tick(self.FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        print("LEFT")
+                    elif event.button == 3:
+                        print("RIGHT")
+            self.screen.fill(self.BLACK)
+
+            trajectory.setGroundLine(pygame.mouse.get_pos())
+            trajectory.drawGroundLine(self.screen)
             pygame.draw.circle(self.screen, (0, 0, 255), (250, 250), 75)
             self.screen.set_at(self.translateToPixel(pygame.math.Vector2(100, 100)), (255, 255, 255))
+            
             pygame.display.flip()
 
     def stateSIMULATION(self) -> None:
