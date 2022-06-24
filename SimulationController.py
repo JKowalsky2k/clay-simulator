@@ -17,13 +17,14 @@ class SimulationController:
         self.clock = pygame.time.Clock()
         self.FPS = 120
 
-        self.screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
+        self.screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
+                                              pygame.RESIZABLE)
         self.screen = pygame.display.get_surface()
-        #self.screen.blit(pygame.transform.flip(self.screen, False, True), dest=(0, 0))
-        self.font = pygame.font.Font("fonts/basic.ttf", 25)
-
+        Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
+        pygame.display.set_caption('Clay simulator')
+       
+        self.font = pygame.font.Font("fonts/basic.ttf", 16)
         self.trajectory = SetupTrajectory.Trajectory()
-
         self.state = States.CONFIG
 
     def stateMachine(self) -> None:
@@ -42,23 +43,26 @@ class SimulationController:
         stage = 1
 
         while self.state == States.CONFIG:
+            Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
             self.clock.tick(self.FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        if stage == 1:
-                            stage = 2
-                        elif stage == 2:
-                            stage = 3
-                        elif stage == 3:
-                            stage = 4
+                        if stage < 4:
+                            stage += 1
                         elif stage == 4:
                             self.state = States.SIMULATION
-                    elif event.button == 3:
-                        print("RIGHT")
             self.screen.fill(Constants.BLACK)
+
+            config_text = self.font.render("Ustaw trajektorię", 
+                                True, 
+                                Constants.WHITE, 
+                                Constants.BLACK)
+            config_text_rect = config_text.get_rect()
+            config_text_rect.x, config_text_rect.y = Constants.SCREEN_WIDTH//2-config_text_rect.width/2, Constants.SCREEN_HEIGHT//15
+            self.screen.blit(config_text, config_text_rect)
 
             if stage == 1:
                 self.trajectory.setGroundLine(pygame.mouse.get_pos())
@@ -113,7 +117,9 @@ class SimulationController:
                     self.state = States.EXIT
 
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.state = States.EXIT
+                    elif event.key == pygame.K_RETURN:
                         self.state = States.CONFIG
                     elif event.key == pygame.K_SPACE:
                         if visbility_of_characteristic_points == True:
@@ -124,7 +130,7 @@ class SimulationController:
                         if flying_clay_radius < 40:
                             flying_clay_radius += 1
                     elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        if flying_clay_radius > 0:
+                        if flying_clay_radius > 2:
                             flying_clay_radius -= 1
                     elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         if delta_x < 1.5:
