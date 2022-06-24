@@ -35,14 +35,14 @@ class Trajectory():
             self.stop_clay_position.x = mouse_position[0]
 
     def setApogeum(self, mouse_position):
-        if mouse_position[0] - Constants.CLAY_RADIUS < 0:
-            self.apogeum_position.x = Constants.CLAY_RADIUS
-        elif mouse_position[0] + Constants.CLAY_RADIUS > Constants.SCREEN_WIDTH:
-            self.apogeum_position.x = Constants.SCREEN_WIDTH - Constants.CLAY_RADIUS
+        if mouse_position[0] - Constants.CLAY_RADIUS < self.start_clay_position.x:
+            self.apogeum_position.x = self.start_clay_position.x
+        elif mouse_position[0] + Constants.CLAY_RADIUS > self.stop_clay_position.x:
+            self.apogeum_position.x = self.stop_clay_position.x
         elif mouse_position[1] + Constants.CLAY_RADIUS/2 > self.ground_line_vertical_position:
             self.apogeum_position.y = self.ground_line_vertical_position
         elif mouse_position[1] - Constants.CLAY_RADIUS < 0:
-            self.apogeum_position.y = Constants.CLAY_RADIUS
+            self.apogeum_position.y = Constants.CLAY_RADIUS 
         else:
             self.apogeum_position = pygame.math.Vector2(mouse_position[0], mouse_position[1])
 
