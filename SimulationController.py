@@ -19,7 +19,8 @@ class SimulationController:
 
         self.screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
         self.screen = pygame.display.get_surface()
-        self.screen.blit(pygame.transform.flip(self.screen, False, True), dest=(0, 0))
+        #self.screen.blit(pygame.transform.flip(self.screen, False, True), dest=(0, 0))
+        self.font = pygame.font.Font("fonts/basic.ttf", 25)
 
         self.trajectory = SetupTrajectory.Trajectory()
 
@@ -100,36 +101,68 @@ class SimulationController:
 
 
         clay_position = self.translate(self.trajectory.getStartClayPosition())
-        print(f"{clay_position = }")
+        
+        delta_x = 0.8
+        flying_clay_radius = Constants.CLAY_RADIUS
+        visbility_of_characteristic_points = True
 
         while self.state == States.SIMULATION:
             self.clock.tick(self.FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.state = States.CONFIG
+                    elif event.key == pygame.K_SPACE:
+                        if visbility_of_characteristic_points == True:
+                            visbility_of_characteristic_points = False
+                        else:
+                            visbility_of_characteristic_points = True
+                    elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                        if flying_clay_radius < 40:
+                            flying_clay_radius += 1
+                    elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        if flying_clay_radius > 0:
+                            flying_clay_radius -= 1
+                    elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        if delta_x < 1.5:
+                            delta_x += 0.1
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        if round(delta_x, 2) > 0:
+                            delta_x -= 0.1
+
             self.screen.fill(Constants.BLACK)
+
+            delta_x_text = self.font.render("Prędkość: {}".format(round(delta_x, 2)), 
+                                True, 
+                                Constants.WHITE, 
+                                Constants.BLACK)
+            delta_x_text_rect = delta_x_text.get_rect()
+            delta_x_text_rect.x, delta_x_text_rect.y = 0, 0
+            self.screen.blit(delta_x_text, delta_x_text_rect)
 
             if clay_position.x <= self.trajectory.getApogeum().x:
                 clay_position.y = parabole1["a"]*clay_position.x**2+parabole1["b"]*clay_position.x+parabole1["c"]
             elif clay_position.x > self.trajectory.getApogeum().x:
                 clay_position.y = parabole2["a"]*clay_position.x**2+parabole2["b"]*clay_position.x+parabole2["c"]
             
-            #print("after_mods:", f"{clay_position = }")
-
             self.trajectory.drawGroundLine(self.screen)
-            self.trajectory.drawStartClayPosition(self.screen)
-            self.trajectory.drawStopClayPosition(self.screen)
-            self.trajectory.drawApogeum(self.screen)
+            if visbility_of_characteristic_points == True:
+                self.trajectory.drawStartClayPosition(self.screen)
+                self.trajectory.drawStopClayPosition(self.screen)
+                self.trajectory.drawApogeum(self.screen)
 
             pygame.draw.circle(surface=self.screen,
                                color=Constants.ORANGE,
                                center=self.translate(clay_position),
-                               radius=Constants.CLAY_RADIUS)
+                               radius=flying_clay_radius)
 
-            clay_position.x += 0.8
+            clay_position.x += delta_x
 
             if clay_position.x > self.trajectory.getStopClayPosition().x:
-                self.state = States.CONFIG
+                clay_position = self.translate(self.trajectory.getStartClayPosition())
 
             pygame.display.flip()
 

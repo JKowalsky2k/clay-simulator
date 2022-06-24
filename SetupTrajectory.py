@@ -27,8 +27,8 @@ class Trajectory():
 
     def setStopClayPosition(self, mouse_position):
         self.stop_clay_position.y = self.ground_line_vertical_position
-        if mouse_position[0] - Constants.CLAY_RADIUS < 0:
-            self.stop_clay_position.x = Constants.CLAY_RADIUS
+        if mouse_position[0] - Constants.CLAY_RADIUS < self.start_clay_position.x:
+            self.stop_clay_position.x = self.start_clay_position.x
         elif mouse_position[0] + Constants.CLAY_RADIUS > Constants.SCREEN_WIDTH:
             self.stop_clay_position.x = Constants.SCREEN_WIDTH - Constants.CLAY_RADIUS
         else:
