@@ -109,8 +109,11 @@ class SimulationController:
         delta_x = 0.8
         flying_clay_radius = Constants.CLAY_RADIUS
         visbility_of_characteristic_points = True
+        is_pause = False
+        previous_delta_x = 0
 
         while self.state == States.SIMULATION:
+            Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
             self.clock.tick(self.FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -138,6 +141,14 @@ class SimulationController:
                     elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         if round(delta_x, 2) > 0:
                             delta_x -= 0.1
+                    elif event.key == pygame.K_RSHIFT:
+                        if is_pause == True:
+                            is_pause = False
+                            delta_x = previous_delta_x
+                        else:
+                            is_pause = True
+                            previous_delta_x = delta_x
+                            delta_x = 0
 
             self.screen.fill(Constants.BLACK)
 
