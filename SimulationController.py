@@ -56,7 +56,7 @@ class SimulationController:
                             self.state = States.SIMULATION
             self.screen.fill(Constants.BLACK)
 
-            config_text = self.font.render("Ustaw trajektorię", 
+            config_text = self.font.render("Setup trajectory", 
                                 True, 
                                 Constants.WHITE, 
                                 Constants.BLACK)
@@ -152,7 +152,7 @@ class SimulationController:
 
             self.screen.fill(Constants.BLACK)
 
-            delta_x_text = self.font.render("Prędkość: {}".format(round(delta_x, 2)), 
+            delta_x_text = self.font.render("Velocity: {}".format(round(delta_x, 2)), 
                                 True, 
                                 Constants.WHITE, 
                                 Constants.BLACK)
