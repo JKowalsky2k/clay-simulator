@@ -21,7 +21,7 @@ class SimulationController:
                                               pygame.RESIZABLE)
         self.screen = pygame.display.get_surface()
         Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
-        pygame.display.set_caption('Clay simulator')
+        pygame.display.set_caption('Clay simulator v1.2')
        
         self.font = pygame.font.Font("fonts/basic.ttf", 16)
         self.trajectory = SetupTrajectory.Trajectory()
@@ -136,7 +136,7 @@ class SimulationController:
                         if flying_clay_radius > 2:
                             flying_clay_radius -= 1
                     elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        if delta_x < 1.5:
+                        if delta_x < 10.0:
                             delta_x += 0.1
                     elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         if round(delta_x, 2) > 0:
