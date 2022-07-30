@@ -1,5 +1,6 @@
 import enum
 import pygame
+import pygame_gui
 import CramerSolver
 import SetupTrajectory
 import Constants
@@ -10,6 +11,12 @@ class States(enum.Enum):
     RESET = 2
     EXIT = 3
 
+class ConfigStates(enum.Enum):
+    START = 0
+    STOP = 1
+    APOGEUM = 2
+    END = 3
+
 class SimulationController:
     def __init__(self) -> None:
         pygame.init()
@@ -17,14 +24,18 @@ class SimulationController:
         self.clock = pygame.time.Clock()
         self.FPS = 120
 
-        self.screen = pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
-                                              pygame.RESIZABLE)
-        self.screen = pygame.display.get_surface()
+        self.screen = pygame.display.set_mode(size=(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
+                                              flags=pygame.RESIZABLE)
+        self.screen_surface = pygame.display.get_surface()
         Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
+
+        self.manager = pygame_gui.UIManager((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
+        self.hud_height = 100
+        
         pygame.display.set_caption('Clay simulator v1.2')
        
         self.font = pygame.font.Font("fonts/basic.ttf", 16)
-        self.trajectory = SetupTrajectory.Trajectory()
+        self.trajectory = SetupTrajectory.Trajectory(self.screen, self.hud_height)
         self.state = States.CONFIG
 
     def stateMachine(self) -> None:
@@ -40,7 +51,14 @@ class SimulationController:
 
     def stateCONFIG(self) -> None:
         print(f"{self.state.name = }")
-        stage = 1
+        
+        config_stage_counter = 1
+        number_of_stages = len(["SET_START_POS", "SET_STOP_POS", "SET_APOGEUM_POS"])
+
+        config_text = self.font.render("Setup trajectory", 
+                                        True, 
+                                        Constants.WHITE, 
+                                        Constants.BLACK)
 
         while self.state == States.CONFIG:
             Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
@@ -50,37 +68,35 @@ class SimulationController:
                     self.state = States.EXIT
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        if stage < 4:
-                            stage += 1
-                        elif stage == 4:
+                        if config_stage_counter < number_of_stages:
+                            config_stage_counter += 1
+                        elif config_stage_counter == number_of_stages:
                             self.state = States.SIMULATION
+
             self.screen.fill(Constants.BLACK)
 
-            config_text = self.font.render("Setup trajectory", 
-                                True, 
-                                Constants.WHITE, 
-                                Constants.BLACK)
             config_text_rect = config_text.get_rect()
             config_text_rect.x, config_text_rect.y = Constants.SCREEN_WIDTH//2-config_text_rect.width/2, Constants.SCREEN_HEIGHT//15
             self.screen.blit(config_text, config_text_rect)
 
-            if stage == 1:
-                self.trajectory.setGroundLine(pygame.mouse.get_pos())
-            elif stage == 2:
+            hud_area = pygame.Surface((Constants.SCREEN_WIDTH, self.hud_height), pygame.SRCALPHA)
+            # Color: yellow, Alpha: 96
+            hud_area.fill((255, 255, 0, 96))
+            self.screen.blit(hud_area, self.translateToPixel(pygame.math.Vector2(0, self.hud_height)))
+
+            if config_stage_counter == 1:
                 self.trajectory.setStartClayPosition(pygame.mouse.get_pos())
-            elif stage == 3:
+            elif config_stage_counter == 2:
                 self.trajectory.setStopClayPosition(pygame.mouse.get_pos())
-            elif stage == 4:
+            elif config_stage_counter == 3:
                 self.trajectory.setApogeum(pygame.mouse.get_pos())
             
-            if stage > 0:
-                self.trajectory.drawGroundLine(self.screen)
-            if stage > 1:
-                self.trajectory.drawStartClayPosition(self.screen)
-            if stage > 2:
-                self.trajectory.drawStopClayPosition(self.screen)
-            if stage > 3:
-                self.trajectory.drawApogeum(self.screen)
+            if config_stage_counter > 0:
+                self.trajectory.drawStartClayPosition()
+            if config_stage_counter > 1:
+                self.trajectory.drawStopClayPosition()
+            if config_stage_counter > 2:
+                self.trajectory.drawApogeum()
             
             pygame.display.flip()
 
@@ -110,14 +126,25 @@ class SimulationController:
         flying_clay_radius = Constants.CLAY_RADIUS
         visbility_of_characteristic_points = True
         is_pause = False
-        previous_delta_x = 0
+        direction = "Right"
+        store_delta_x = 0
+
+        hello_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 275), (100, 50)),
+                                                    text='Say Hello',
+                                                    manager=self.manager)
 
         while self.state == States.SIMULATION:
             Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
-            self.clock.tick(self.FPS)
+            dt = self.clock.tick(self.FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
+
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == hello_button:
+                        print('Hello World!')
+                
+                self.manager.process_events(event)
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
@@ -136,19 +163,29 @@ class SimulationController:
                         if flying_clay_radius > 2:
                             flying_clay_radius -= 1
                     elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        if delta_x < 10.0:
-                            delta_x += 0.1
+                        if delta_x < 2.0:
+                            delta_x += 0.05
                     elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         if round(delta_x, 2) > 0:
-                            delta_x -= 0.1
+                            delta_x -= 0.05
                     elif event.key == pygame.K_RSHIFT:
                         if is_pause == True:
                             is_pause = False
-                            delta_x = previous_delta_x
+                            delta_x = store_delta_x
                         else:
                             is_pause = True
-                            previous_delta_x = delta_x
+                            store_delta_x = delta_x
                             delta_x = 0
+                    elif event.key == pygame.K_LSHIFT:
+                        if direction == "Right":
+                            direction = "Left"
+                        else:
+                            direction = "Right"
+                    if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                        if event.ui_element == hello_button:
+                            print('Hello World!')
+
+            self.manager.update(dt)
 
             self.screen.fill(Constants.BLACK)
 
@@ -165,21 +202,30 @@ class SimulationController:
             elif clay_position.x > self.trajectory.getApogeum().x:
                 clay_position.y = parabole2["a"]*clay_position.x**2+parabole2["b"]*clay_position.x+parabole2["c"]
             
-            self.trajectory.drawGroundLine(self.screen)
+            # self.trajectory.drawGroundLine(self.screen)
             if visbility_of_characteristic_points == True:
-                self.trajectory.drawStartClayPosition(self.screen)
-                self.trajectory.drawStopClayPosition(self.screen)
-                self.trajectory.drawApogeum(self.screen)
+                self.trajectory.drawStartClayPosition()
+                self.trajectory.drawStopClayPosition()
+                self.trajectory.drawApogeum()
 
             pygame.draw.circle(surface=self.screen,
                                color=Constants.ORANGE,
                                center=self.translate(clay_position),
                                radius=flying_clay_radius)
 
-            clay_position.x += delta_x
+            if direction == "Right":
+                clay_position.x += delta_x * dt
+            else:
+                clay_position.x -= delta_x * dt
 
-            if clay_position.x > self.trajectory.getStopClayPosition().x:
-                clay_position = self.translate(self.trajectory.getStartClayPosition())
+            if direction == "Right":
+                if clay_position.x > self.trajectory.getStopClayPosition().x:
+                    clay_position = self.translate(self.trajectory.getStartClayPosition())
+            else:
+                if clay_position.x < self.trajectory.getStartClayPosition().x:
+                    clay_position = self.translate(self.trajectory.getStopClayPosition())
+
+            self.manager.draw_ui(self.screen)
 
             pygame.display.flip()
 
