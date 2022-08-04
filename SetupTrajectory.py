@@ -1,5 +1,8 @@
 import pygame
 import Constants
+import numpy as np 
+import math 
+import scipy.constants as const 
 
 class Trajectory():
     def __init__(self, screen, hud_height) -> None:
@@ -53,6 +56,25 @@ class Trajectory():
             self.apogeum_position.y = Constants.SCREEN_HEIGHT - self.hud_height - Constants.CLAY_RADIUS
         else:
             self.apogeum_position.y = mouse_position[1]
+
+    # TODO: pomyleć nad refaktorem
+    def projectile_motion(self, angle=math.pi/4, v0=40, dt=1e-3, gamm=0, h=100):
+        vx0 = math.cos(angle)*v0
+        vy0 = math.sin(angle)*v0
+        time = np.arange(0, 100, dt)
+        x = np.zeros(len(time))
+        y = np.zeros(len(time))
+        x[0], y[0] = 0, 0
+        x[1], y[1] = x[0] + vx0*(2*dt), y[0]+vy0*(2*dt)
+        i=1 
+        while y[i] >= 0:
+            f = 0.5 * gamm * (h - y[i]) * dt
+            x[i+1] = ((2*x[i]-x[i-1]) + (f * x[i-1])) / (1 + f)
+            y[i+1] = ((2*y[i]-y[i-1]) + (f * y[i-1]) - const.g*(dt**2) ) / (1 + f)
+            i += 1
+        x = x[0:i+1]
+        y = y[0:i+1]
+        return [pygame.math.Vector2(point[0], -point[1]) + self.start_clay_position for point in list(zip(x, y))]
 
     def drawStartClayPosition(self):
         pygame.draw.circle(surface=self.screen,
