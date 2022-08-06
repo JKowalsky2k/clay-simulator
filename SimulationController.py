@@ -37,23 +37,30 @@ class SimulationController:
 
         self.manager = pygame_gui.UIManager(window_resolution=(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
                                             theme_path="themes/theme.json")
-        self.hud_height = 200
-        pygame.display.set_caption('Clay simulator (ver. 30.07.2022)')
+    
+        pygame.display.set_caption('Clay simulator (ver. 6.08.2022)')
 
         self.update_clay = pygame.USEREVENT
         pygame.time.set_timer(self.update_clay, 1)
        
         self.font = pygame.font.Font("fonts/basic.ttf", 16)
-        self.trajectory = SetupTrajectory.Trajectory(self.screen, self.hud_height)
+        self.trajectory = SetupTrajectory.Trajectory(self.screen, Constants.HUD_HEIGHT)
         self.state = States.CONFIG
-
-        self.start_position = Point.Point(position=(Constants.SCREEN_WIDTH//2, Constants.SCREEN_WIDTH//2), 
-                                          radius=Constants.CLAY_RADIUS,
-                                          color=Constants.RED)
 
         self.velocity = 40
         self.angle = 45
         self.gamma = 0
+        self.size = Constants.CLAY_RADIUS
+
+        self.start_position = Point.Point(position=(Constants.SCREEN_WIDTH//2, Constants.SCREEN_WIDTH//2), 
+                                          radius=Constants.CLAY_RADIUS,
+                                          color=Constants.RED)
+        self.stop_position = Point.Point(position=(0, 0), 
+                                         radius=Constants.CLAY_RADIUS,
+                                         color=Constants.BLUE)
+        self.clay = Point.Point(position=(0, 0), 
+                                radius=Constants.CLAY_RADIUS,
+                                color=Constants.ORANGE)
 
     def updateResolution(self):
         Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
@@ -80,7 +87,7 @@ class SimulationController:
         controls = []
 
         self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
-        config_hud_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-self.hud_height, Constants.SCREEN_WIDTH, self.hud_height),
+        config_hud_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT, Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT),
                                                     container=self.manager.get_root_container(),
                                                     manager=self.manager)
         controls.append(config_hud_container)
@@ -171,19 +178,15 @@ class SimulationController:
 
         right_padding = 10
         config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
-        config_hud_container.set_dimensions((config_hud_container_min_width, self.hud_height))
-        config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - self.hud_height))
-
-        config_text = self.font.render("Setup trajectory", 
-                                        True, 
-                                        Constants.WHITE, 
-                                        Constants.BLACK)
+        config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
+        config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
         self.trajectory.projectile_motion(angle=self.angle, 
                                           v0=self.velocity, 
                                           gamm=self.gamma,
                                           dt=1e-2, 
                                           offset=self.start_position.getPosition())
+        self.stop_position.setPosition(self.trajectory.getTrajectory()[-1])
 
         while self.state == States.CONFIG:
             dt = self.clock.tick(self.FPS)
@@ -191,12 +194,12 @@ class SimulationController:
                 self.updateResolution()
                 self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
                 self.screen_surface = pygame.display.get_surface()
-                config_hud_container.set_position((0, Constants.SCREEN_HEIGHT-self.hud_height))
+                config_hud_container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
                 
                 right_padding = 10
                 config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
-                config_hud_container.set_dimensions((config_hud_container_min_width, self.hud_height))
-                config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - self.hud_height))
+                config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
+                config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -216,20 +219,10 @@ class SimulationController:
                         if self.velocity < 80:
                             self.velocity += 1
                             velocity_value_label.set_text(f"{self.velocity}")
-                            self.trajectory.projectile_motion(angle=self.angle, 
-                                                              v0=self.velocity, 
-                                                              gamm=self.gamma,
-                                                              dt=1e-2,
-                                                              offset=self.start_position.getPosition())
                     if event.ui_element == velocity_decrease_button:
                         if self.velocity > 0:
                             self.velocity -= 1
                             velocity_value_label.set_text(f"{self.velocity}")
-                            self.trajectory.projectile_motion(angle=self.angle, 
-                                                              v0=self.velocity, 
-                                                              gamm=self.gamma,
-                                                              dt=1e-2,
-                                                              offset=self.start_position.getPosition())
                     # Angle
                     if event.ui_element == angle_increase_button:
                         if self.angle < 180:
@@ -237,55 +230,43 @@ class SimulationController:
                         else:
                             self.angle = 0
                         angle_value_label.set_text(f"{round(self.angle, 2)}")
-                        self.trajectory.projectile_motion(angle=self.angle, 
-                                                          v0=self.velocity, 
-                                                          gamm=self.gamma,
-                                                          dt=1e-2,
-                                                          offset=self.start_position.getPosition())
                     if event.ui_element == angle_decrease_button:
                         if self.angle > 0:
                             self.angle -= 7.5
                         else:
                             self.angle = 180
                         angle_value_label.set_text(f"{round(self.angle, 2)}")
-                        self.trajectory.projectile_motion(angle=self.angle, 
-                                                          v0=self.velocity, 
-                                                          gamm=self.gamma,
-                                                          dt=1e-2,
-                                                          offset=self.start_position.getPosition())
                     # Gamma
                     if event.ui_element == gamma_increase_button:
                         if self.gamma < 0.01:
-                            self.gamma += 0.05
+                            self.gamma += 0.001
                             gamma_value_label.set_text(f"{self.gamma}")
-                            self.trajectory.projectile_motion(angle=self.angle, 
-                                                              v0=self.velocity, 
-                                                              gamm=self.gamma,
-                                                              dt=1e-2,
-                                                              offset=self.start_position.getPosition())
                     if event.ui_element == gamma_decrease_button:
                         if self.gamma > 0:
-                            self.gamma -= 0.05
+                            self.gamma -= 0.001
                             gamma_value_label.set_text(f"{self.gamma}")
-                            self.trajectory.projectile_motion(angle=self.angle, 
-                                                              v0=self.velocity, 
-                                                              gamm=self.gamma,
-                                                              dt=1e-2,
-                                                              offset=self.start_position.getPosition())
                     # Start
                     if event.ui_element == start_button:
                         for control in controls:
                             control.kill()
                         self.state = States.SIMULATION
+                    
+                    self.trajectory.projectile_motion(angle=self.angle, 
+                                                      v0=self.velocity, 
+                                                      gamm=self.gamma,
+                                                      dt=1e-2,
+                                                      offset=self.start_position.getPosition())
+                    self.stop_position.setPosition(self.trajectory.getTrajectory()[-1])
+
                 # Left mouse button
                 if pygame.mouse.get_pressed(num_buttons=3)[2]:
-                    # self.trajectory.setStartClayPosition(pygame.mouse.get_pos())
                     self.start_position.setPosition(pygame.mouse.get_pos())
                     self.trajectory.projectile_motion(angle=self.angle, 
                                                       v0=self.velocity, 
                                                       gamm=self.gamma,
                                                       dt=1e-2,
                                                       offset=self.start_position.getPosition())
+                    self.stop_position.setPosition(self.trajectory.getTrajectory()[-1])
                 
                 self.manager.process_events(event)
 
@@ -293,14 +274,9 @@ class SimulationController:
 
             self.screen.fill(Constants.BLACK)
 
-            config_text_rect = config_text.get_rect()
-            config_text_rect.x, config_text_rect.y = Constants.SCREEN_WIDTH//2-config_text_rect.width/2, Constants.SCREEN_HEIGHT//15
-            self.screen.blit(config_text, config_text_rect)
-
-            self.trajectory.draw(self.screen_surface)
+            self.trajectory.draw(self.screen_surface, gap=Constants.CONFIG_TRAJECTORY_GAP)
             self.start_position.draw(surface=self.screen_surface)
-            # TODO: Podmienic tak jak start position
-            self.trajectory.drawStopClayPosition()
+            self.stop_position.draw(surface=self.screen_surface)
 
             self.manager.draw_ui(self.screen_surface)
      
@@ -309,23 +285,52 @@ class SimulationController:
     def stateSIMULATION(self) -> None:
         print(f"{self.state.name = }")
 
-        size = Constants.CLAY_RADIUS
+        # size = Constants.CLAY_RADIUS
         visbility_of_characteristic_points = True
         is_pause = False
         store_delta_x = 0
-        angle = 45
-        velocity = 40
         simulation_speed_step = 1
         idx = 0
-        # self.trajectory.projectile_motion(angle=angle, v0=velocity)
-    
+
+        self.trajectory.projectile_motion(angle=self.angle, 
+                                    v0=self.velocity, 
+                                    gamm=self.gamma,
+                                    dt=1e-3,
+                                    offset=self.start_position.getPosition())
+
         controls = []
 
         self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
-        hud_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-self.hud_height, Constants.SCREEN_WIDTH, self.hud_height),
+        hud_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT, Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT),
                                                     container=self.manager.get_root_container(),
                                                     manager=self.manager)
         controls.append(hud_container)
+
+        # Section HUD Simulation Speed
+
+        simulation_speed_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(10, 10, 90, 20),
+                                                                    text='Speed', 
+                                                                    manager=self.manager,
+                                                                    container=hud_container)
+        controls.append(simulation_speed_name_label)
+
+        simulation_speed_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(10, 40, 90, 20),
+                                                                    text=f"{simulation_speed_step}", 
+                                                                    manager=self.manager,
+                                                                    container=hud_container)
+        controls.append(simulation_speed_value_label)
+        
+        simulation_speed_increase_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 70, 40, 20),
+                                                                        text='+', 
+                                                                        manager=self.manager,
+                                                                        container=hud_container)
+        controls.append(simulation_speed_increase_button)
+        
+        simulation_speed_decrease_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(60, 70, 40, 20),
+                                                                        text='-', 
+                                                                        manager=self.manager,
+                                                                        container=hud_container)
+        controls.append(simulation_speed_decrease_button)  
 
         # Section HUD Clay size
 
@@ -336,7 +341,7 @@ class SimulationController:
         controls.append(size_name_label)
 
         size_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(110, 40, 90, 20),
-                                                        text=f"{size}", 
+                                                        text=f"{self.size}", 
                                                         manager=self.manager,
                                                         container=hud_container)
         controls.append(size_value_label)
@@ -352,42 +357,16 @@ class SimulationController:
                                                             manager=self.manager,
                                                             container=hud_container)
         controls.append(size_decrease_button)
-
-        # Section HUD Simulation Speed
-
-        simulation_speed_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(110, 110, 90, 20),
-                                                        text='Speed', 
-                                                        manager=self.manager,
-                                                        container=hud_container)
-        controls.append(simulation_speed_name_label)
-
-        simulation_speed_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(110, 140, 90, 20),
-                                                        text=f"{simulation_speed_step}", 
-                                                        manager=self.manager,
-                                                        container=hud_container)
-        controls.append(simulation_speed_value_label)
-        
-        simulation_speed_increase_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(110, 170, 40, 20),
-                                                            text='+', 
-                                                            manager=self.manager,
-                                                            container=hud_container)
-        controls.append(simulation_speed_increase_button)
-        
-        simulation_speed_decrease_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(160, 170, 40, 20),
-                                                            text='-', 
-                                                            manager=self.manager,
-                                                            container=hud_container)
-        controls.append(simulation_speed_decrease_button)        
-        
+              
         # Section HUD Visibility
 
-        visibility_name_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(310, 10, 90, 20),
+        visibility_name_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect(210, 10, 90, 20),
                                                             text='Visibility', 
                                                             manager=self.manager,
                                                             container=hud_container)
         controls.append(visibility_name_label)
 
-        visibility_button = pygame_gui.elements.UIButton(   relative_rect=pygame.Rect(310, 40, 90, 50),
+        visibility_button = pygame_gui.elements.UIButton(   relative_rect=pygame.Rect(210, 40, 90, 50),
                                                             text='Disable', 
                                                             manager=self.manager,
                                                             container=hud_container)
@@ -395,13 +374,13 @@ class SimulationController:
 
         # Section HUD Pause
 
-        pause_name_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(410, 10, 90, 20),
+        pause_name_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(310, 10, 90, 20),
                                                         text='Pause', 
                                                         manager=self.manager,
                                                         container=hud_container)
         controls.append(pause_name_label)
 
-        pause_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(410, 40, 90, 50),
+        pause_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(310, 40, 90, 50),
                                                     text='Enable', 
                                                     manager=self.manager,
                                                     container=hud_container)
@@ -409,34 +388,34 @@ class SimulationController:
 
         # Section HUD Trajectory Selection
 
-        trajectory_selection_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(510, 10, 260, 20),
+        trajectory_selection_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(410, 10, 260, 20),
                                                                   text='Trajectory', 
                                                                   manager=self.manager,
                                                                   container=hud_container)
         controls.append(trajectory_selection_label)                                                                    
 
-        trajectory_1_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(510, 40, 50, 50),
+        trajectory_1_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(410, 40, 50, 50),
                                                                 text='1', 
                                                                 manager=self.manager,
                                                                 container=hud_container,
                                                                 object_id=pygame_gui.core.ObjectID(object_id="#trajectory_button"))
         controls.append(trajectory_1_selection)
 
-        trajectory_2_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(580, 40, 50, 50),
+        trajectory_2_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(480, 40, 50, 50),
                                                                 text='2', 
                                                                 manager=self.manager,
                                                                 container=hud_container,
                                                                 object_id=pygame_gui.core.ObjectID(object_id="#trajectory_button"))
         controls.append(trajectory_2_selection)
 
-        trajectory_3_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(650, 40, 50, 50),
+        trajectory_3_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(550, 40, 50, 50),
                                                                 text='3', 
                                                                 manager=self.manager,
                                                                 container=hud_container,
                                                                 object_id=pygame_gui.core.ObjectID(object_id="#trajectory_button"))
         controls.append(trajectory_3_selection)
         
-        trajectory_4_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(720, 40, 50, 50),
+        trajectory_4_selection = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(620, 40, 50, 50),
                                                                 text='4', 
                                                                 manager=self.manager,
                                                                 container=hud_container,
@@ -445,7 +424,7 @@ class SimulationController:
 
         # Section HUD Reset
 
-        last_control = reset_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(780, 10, 90, 80),
+        last_control = reset_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(680, 10, 90, 80),
                                                                     text='Reset', 
                                                                     manager=self.manager,
                                                                     container=hud_container)
@@ -453,8 +432,8 @@ class SimulationController:
 
         right_padding = 10
         hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
-        hud_container.set_dimensions((hud_container_min_width, self.hud_height))
-        hud_container.set_position(((Constants.SCREEN_WIDTH - hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - self.hud_height))
+        hud_container.set_dimensions((hud_container_min_width, Constants.HUD_HEIGHT))
+        hud_container.set_position(((Constants.SCREEN_WIDTH - hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
         
         while self.state == States.SIMULATION:
             dt = self.clock.tick(self.FPS)
@@ -462,17 +441,17 @@ class SimulationController:
                 self.updateResolution()
                 self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
                 self.screen_surface = pygame.display.get_surface()
-                hud_container.set_position((0, Constants.SCREEN_HEIGHT-self.hud_height))
+                hud_container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
                 
                 right_padding = 10
                 hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
-                hud_container.set_dimensions((hud_container_min_width, self.hud_height))
-                hud_container.set_position(((Constants.SCREEN_WIDTH - hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - self.hud_height))
+                hud_container.set_dimensions((hud_container_min_width, Constants.HUD_HEIGHT))
+                hud_container.set_position(((Constants.SCREEN_WIDTH - hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
-                # Event resposible for protects minimum widow size
+                # Event resposible for protects minimum window size
                 elif event.type == pygame.VIDEORESIZE:
                     screen_width, screen_height = event.size
                     if screen_width < Constants.MIN_SCREEN_WIDTH:
@@ -490,17 +469,20 @@ class SimulationController:
                         idx += simulation_speed_step
                     else:
                         idx = 0
+                    self.clay.setPosition(self.trajectory.getTrajectory()[idx])
 
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     # Size
                     if event.ui_element == size_increase_button:
-                        if size < 40:
-                            size += 1
-                            size_value_label.set_text(f"{round(size, 2)}")
+                        if self.size < 40:
+                            self.size += 1
+                            size_value_label.set_text(f"{round(self.size, 2)}")
+                            self.clay.setRadius(self.size)
                     if event.ui_element == size_decrease_button:
-                        if size > 2:
-                            size -= 1
-                            size_value_label.set_text(f"{round(size, 2)}")
+                        if self.size > 2:
+                            self.size -= 1
+                            size_value_label.set_text(f"{round(self.size, 2)}")
+                            self.clay.setRadius(self.size)
                     # Simulation Speed
                     if event.ui_element == simulation_speed_increase_button:
                         if simulation_speed_step < 20:
@@ -552,11 +534,10 @@ class SimulationController:
             self.screen_surface.fill(Constants.BLACK)
             
             if visbility_of_characteristic_points == True:
-                self.trajectory.draw(self.screen_surface)
-                self.start_position.draw(self.screen_surface)
-                self.trajectory.drawStopClayPosition()
-
-            self.trajectory.drawClay(idx=idx, size=size)
+                self.trajectory.draw(self.screen_surface, gap=Constants.SIMULATION_TRAJECTORY_GAP)
+            self.start_position.draw(self.screen_surface)
+            self.stop_position.draw(surface=self.screen_surface)
+            self.clay.draw(surface=self.screen_surface)
 
             self.manager.draw_ui(self.screen_surface)
 

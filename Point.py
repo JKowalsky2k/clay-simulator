@@ -27,11 +27,18 @@ class Point():
 
         self.circle_bounding_box = pygame.Rect(self.position, (2*self.radius, 2*self.radius))
 
+    def setRadius(self, new_radius):
+        self.radius = new_radius
+        self.circle_bounding_box = pygame.Rect(self.position, (2*self.radius, 2*self.radius))
+
     def getPosition(self):
         return self.position
 
     def getBoundingBox(self):
         return self.circle_bounding_box
+
+    def getRadius(self):
+        return self.radius
     
     def draw(self, surface):
         pygame.draw.circle(surface=surface, color=self.color, center=self.position, radius=self.radius)

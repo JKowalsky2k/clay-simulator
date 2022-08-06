@@ -49,35 +49,16 @@ class Trajectory():
             else:
                 break
 
-    def drawStartClayPosition(self):
-        pygame.draw.circle(surface=self.screen_surface,
-                           color=Constants.RED, 
-                           center=pygame.math.Vector2(self.start_clay_position),
-                           radius=Constants.CLAY_RADIUS)
-
-    def draw(self, surface):
-        for idx in range(len(self.trajectory)):
-            if idx % Constants.TRAJECTORY_GAP == 0:
+    def draw(self, surface, gap):
+        for idx in range(self.getNumberOfPoints()):
+            if idx % gap == 0:
                 pygame.draw.circle(surface=surface, 
                                    color=Constants.WHITE, 
                                    center=self.trajectory[idx], 
                                    radius=1)
     
-    def drawClay(self, idx, size):
-        pygame.draw.circle(surface=self.screen_surface,
-                color=Constants.ORANGE,
-                center=self.trajectory[idx],
-                radius=size)
-        
-
-    def drawStopClayPosition(self):
-        pygame.draw.circle(surface=self.screen_surface,
-                           color=Constants.BLUE, 
-                           center=self.trajectory[-1],
-                           radius=Constants.CLAY_RADIUS)
- 
-    def getStartClayPosition(self):
-        return self.start_clay_position
-
+    def getTrajectory(self):
+        return self.trajectory
+    
     def getNumberOfPoints(self):
         return len(self.trajectory)
