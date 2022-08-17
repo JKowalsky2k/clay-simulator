@@ -1,42 +1,61 @@
-# -*- coding: utf-8 -*- 
-import matplotlib.pyplot as plt 
-import numpy as np 
-import math 
-import scipy.constants as const
-g = const.g #gravitation constant 
-dt = 1e-3 #integration time step (delta t) 
-v0 = 40 #initial speed at t=0 
-angle = math.pi / 4 #launch angle in radians 
-time = np.arange(0,100, dt) #create time axis 
-gamm = 0.005 #gamma (used to compute f, below) 
-h = 100 #height (used to compute f, below)
+import numpy as np
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
 
-def traj_fr(angle, v0):
-    vx0 = math.cos(angle)*v0
-    vy0 = math.sin(angle)*v0
-    x = [0]
-    y = [0]
-    x.append(x[-1] + vx0*(2*dt))
-    y.append(y[-1] + vy0*(2*dt))
-    while y[-1] >= 0:
-        f = 0.5 * gamm * (h - y[-1]) * dt
-        x.append(((2*x[-1]-x[-2]) + (f * x[-2])) / (1 + f))
-        y.append(((2*y[-1]-y[-2]) + (f * y[-2]) - g*(dt**2) ) / (1 + f))
-    return x, y, None, None
+# Drag coefficient, projectile radius (m), area (m2) and mass (kg).
+c = 0.47
+r = 0.05
+A = np.pi * r**2
+m = 0.2
+# Air density (kg.m-3), acceleration due to gravity (m.s-2).
+rho_air = 1.28
+g = 9.81
+# For convenience, define  this constant.
+k = 0.5 * c * rho_air * A
 
-x,y,duration,maxrange = traj_fr(math.pi/4, v0)
+# Initial speed and launch angle (from the horizontal).
+v0 = 10
+phi0 = np.radians(45)
 
-print(f'{x[0] =}', f'{x[-1] =}')
-print(f'{y[0] =}', f'{y[-1] =}')
+def deriv(t, u):
+    x, xdot, z, zdot = u
+    speed = np.hypot(xdot, zdot)
+    xdotdot = -k/m * speed * xdot
+    zdotdot = -k/m * speed * zdot - g
+    return xdot, xdotdot, zdot, zdotdot
 
-plt.plot(x, y, color="b", label="with gamma") #quick plot of x vs y to check trajectory 
-plt.xlabel('x') 
-plt.ylabel('y')
+# Initial conditions: x0, v0_x, z0, v0_z.
+u0 = 0, v0 * np.cos(phi0), 0., v0 * np.sin(phi0)
+# Integrate up to tf unless we hit the target sooner.
+t0, tf = 0, 50
 
-gamm = 0
-x,y,duration,maxrange = traj_fr(math.pi/4, v0) 
-plt.plot(x, y, color="r", label="no gamma")
-plt.legend()
+def hit_target(t, u):
+    # We've hit the target if the z-coordinate is 0.
+    return u[2]
+# Stop the integration when we hit the target.
+hit_target.terminal = True
+# We must be moving downwards (don't stop before we begin moving upwards!)
+hit_target.direction = -1
 
+def max_height(t, u):
+    # The maximum height is obtained when the z-velocity is zero.
+    return u[3]
 
+soln = solve_ivp(deriv, (t0, tf), u0, dense_output=True,
+                 events=(hit_target, max_height))
+print(soln)
+print('Time to target = {:.2f} s'.format(soln.t_events[0][0]))
+print('Time to highest point = {:.2f} s'.format(soln.t_events[1][0]))
+
+# A fine grid of time points from 0 until impact time.
+t = np.linspace(0, soln.t_events[0][0], 100)
+
+# Retrieve the solution for the time grid and plot the trajectory.
+sol = soln.sol(t)
+x, z = sol[0], sol[2]
+print('Range to target, xmax = {:.2f} m'.format(x[-1]))
+print('Maximum height, zmax = {:.2f} m'.format(max(z)))
+plt.plot(x, z)
+plt.xlabel('x /m')
+plt.ylabel('z /m')
 plt.show()

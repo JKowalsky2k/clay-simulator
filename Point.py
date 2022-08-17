@@ -8,7 +8,11 @@ class Point():
         self.position = pygame.math.Vector2(position)
         self.radius = radius
         self.color = color
-        self.circle_bounding_box = pygame.Rect(self.position, (2*self.radius, 2*self.radius))
+        self.center_offset = pygame.math.Vector2(self.radius, self.radius)
+        self.bounding_box = pygame.Rect(self.position-self.center_offset, (2*self.radius, 2*self.radius))
+
+    def __updateBBox(self):
+        self.bounding_box = pygame.Rect(self.position-self.center_offset, (2*self.radius, 2*self.radius))
     
     def setPosition(self, new_position):
         if new_position[0] - Constants.CLAY_RADIUS < 0:
@@ -25,20 +29,24 @@ class Point():
         else:
             self.position.y = new_position[1]
 
-        self.circle_bounding_box = pygame.Rect(self.position, (2*self.radius, 2*self.radius))
+        self.__updateBBox()
 
     def setRadius(self, new_radius):
         self.radius = new_radius
-        self.circle_bounding_box = pygame.Rect(self.position, (2*self.radius, 2*self.radius))
+        self.__updateBBox()
 
     def getPosition(self):
         return self.position
 
     def getBoundingBox(self):
-        return self.circle_bounding_box
+        return self.bounding_box
 
     def getRadius(self):
         return self.radius
     
     def draw(self, surface):
         pygame.draw.circle(surface=surface, color=self.color, center=self.position, radius=self.radius)
+    
+    def drawBBox(self, surface):
+        pygame.draw.rect(surface=surface, color=Constants.GREEN, rect=self.bounding_box)
+

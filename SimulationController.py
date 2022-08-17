@@ -1,15 +1,10 @@
 import enum
-from signal import pause
-from turtle import color, position
+from sys import float_repr_style
 import pygame
 import pygame_gui
-import CramerSolver
 import SetupTrajectory
 import Constants
 import Point
-import numpy as np 
-import math 
-import scipy.constants as const
 
 class States(enum.Enum):
     CONFIG = 0
@@ -52,10 +47,10 @@ class SimulationController:
         self.gamma = 0
         self.size = Constants.CLAY_RADIUS
 
-        self.start_position = Point.Point(position=(Constants.SCREEN_WIDTH//2, Constants.SCREEN_WIDTH//2), 
+        self.start_point = Point.Point(position=(Constants.SCREEN_WIDTH//2, Constants.SCREEN_WIDTH//2), 
                                           radius=Constants.CLAY_RADIUS,
                                           color=Constants.RED)
-        self.stop_position = Point.Point(position=(0, 0), 
+        self.end_point = Point.Point(position=(0, 0), 
                                          radius=Constants.CLAY_RADIUS,
                                          color=Constants.BLUE)
         self.clay = Point.Point(position=(0, 0), 
@@ -85,6 +80,8 @@ class SimulationController:
         print(f"{self.state.name = }")
         
         controls = []
+        drag = False
+        trajectory_elements = [{"object": self.start_point, "drag": False}]
 
         self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
         config_hud_container = pygame_gui.core.UIContainer(relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT, Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT),
@@ -185,8 +182,8 @@ class SimulationController:
                                           v0=self.velocity, 
                                           gamm=self.gamma,
                                           dt=1e-2, 
-                                          offset=self.start_position.getPosition())
-        self.stop_position.setPosition(self.trajectory.getTrajectory()[-1])
+                                          offset=self.start_point.getPosition())
+        self.end_point.setPosition(self.trajectory.getLastPointPosition())
 
         while self.state == States.CONFIG:
             dt = self.clock.tick(self.FPS)
@@ -213,6 +210,27 @@ class SimulationController:
                         screen_height = Constants.MIN_SCREEN_HEIGHT
                     self.screen = pygame.display.set_mode(  size=(screen_width, screen_height), 
                                                             flags=pygame.RESIZABLE)
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        for element in trajectory_elements:
+                            if element["object"].getBoundingBox().collidepoint(pygame.mouse.get_pos()):
+                                element["drag"] = True
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        for element in trajectory_elements:
+                            element["drag"] = False
+                elif event.type == pygame.MOUSEMOTION:
+                    for element in trajectory_elements:
+                        if True == element["drag"]:
+                            element["object"].setPosition(pygame.mouse.get_pos())
+                            self.trajectory.projectile_motion(angle=self.angle, 
+                                                              v0=self.velocity, 
+                                                              gamm=self.gamma,
+                                                              dt=1e-2,
+                                                              offset=self.start_point.getPosition())
+                            self.end_point.setPosition(self.trajectory.getLastPointPosition())
+
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     # Velocity
                     if event.ui_element == velocity_increase_button:
@@ -255,18 +273,8 @@ class SimulationController:
                                                       v0=self.velocity, 
                                                       gamm=self.gamma,
                                                       dt=1e-2,
-                                                      offset=self.start_position.getPosition())
-                    self.stop_position.setPosition(self.trajectory.getTrajectory()[-1])
-
-                # Left mouse button
-                if pygame.mouse.get_pressed(num_buttons=3)[2]:
-                    self.start_position.setPosition(pygame.mouse.get_pos())
-                    self.trajectory.projectile_motion(angle=self.angle, 
-                                                      v0=self.velocity, 
-                                                      gamm=self.gamma,
-                                                      dt=1e-2,
-                                                      offset=self.start_position.getPosition())
-                    self.stop_position.setPosition(self.trajectory.getTrajectory()[-1])
+                                                      offset=self.start_point.getPosition())
+                    self.end_point.setPosition(self.trajectory.getLastPointPosition())
                 
                 self.manager.process_events(event)
 
@@ -275,8 +283,9 @@ class SimulationController:
             self.screen.fill(Constants.BLACK)
 
             self.trajectory.draw(self.screen_surface, gap=Constants.CONFIG_TRAJECTORY_GAP)
-            self.start_position.draw(surface=self.screen_surface)
-            self.stop_position.draw(surface=self.screen_surface)
+            # self.start_point.drawBBox(surface=self.screen_surface)
+            self.start_point.draw(surface=self.screen_surface)
+            self.end_point.draw(surface=self.screen_surface)
 
             self.manager.draw_ui(self.screen_surface)
      
@@ -296,7 +305,8 @@ class SimulationController:
                                     v0=self.velocity, 
                                     gamm=self.gamma,
                                     dt=1e-3,
-                                    offset=self.start_position.getPosition())
+                                    offset=self.start_point.getPosition())
+        self.end_point.setPosition(self.trajectory.getLastPointPosition())
 
         controls = []
 
@@ -535,8 +545,8 @@ class SimulationController:
             
             if visbility_of_characteristic_points == True:
                 self.trajectory.draw(self.screen_surface, gap=Constants.SIMULATION_TRAJECTORY_GAP)
-            self.start_position.draw(self.screen_surface)
-            self.stop_position.draw(surface=self.screen_surface)
+            self.start_point.draw(self.screen_surface)
+            self.end_point.draw(surface=self.screen_surface)
             self.clay.draw(surface=self.screen_surface)
 
             self.manager.draw_ui(self.screen_surface)

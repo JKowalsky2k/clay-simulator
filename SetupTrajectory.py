@@ -28,7 +28,7 @@ class Trajectory():
         else:
             self.start_clay_position.y = mouse_position[1]
 
-    def projectile_motion(self, angle=45, v0=40, dt=1e-3, gamm=0, h=100, offset=pygame.math.Vector2(0, 0)):
+    def projectile_motion(self, angle=45, v0=40, dt=1e-3, gamm=0, h=300, offset=pygame.math.Vector2(0, 0)):
         vx0 = math.cos(np.deg2rad(angle))*v0
         vy0 = math.sin(np.deg2rad(angle))*v0
         x, y = [0], [0]
@@ -59,6 +59,12 @@ class Trajectory():
     
     def getTrajectory(self):
         return self.trajectory
+    
+    def getFirstPointPosition(self):
+        return self.trajectory[0]
+
+    def getLastPointPosition(self):
+        return self.trajectory[-1]
     
     def getNumberOfPoints(self):
         return len(self.trajectory)
