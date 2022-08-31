@@ -1,39 +1,29 @@
-from ast import Constant
 import pygame
-import math
 import Constants
 
 class Point():
-    def __init__(self, position, radius, color):
+    def __init__(self, position, radius, color, trajectory):
         self.position = pygame.math.Vector2(position)
         self.radius = radius
         self.color = color
+        self.trajectory = trajectory
         self.center_offset = pygame.math.Vector2(self.radius, self.radius)
+        self.movable = False
         self.bounding_box = pygame.Rect(self.position-self.center_offset, (2*self.radius, 2*self.radius))
 
-    def __updateBBox(self):
+    def _updateBBox(self):
         self.bounding_box = pygame.Rect(self.position-self.center_offset, (2*self.radius, 2*self.radius))
     
     def setPosition(self, new_position):
-        if new_position[0] - Constants.CLAY_RADIUS < 0:
-            self.position.x = Constants.CLAY_RADIUS
-        elif new_position[0] + Constants.CLAY_RADIUS > Constants.SCREEN_WIDTH:
-            self.position.x = Constants.SCREEN_WIDTH - Constants.CLAY_RADIUS
-        else:
-            self.position.x = new_position[0]
-        
-        if new_position[1] - Constants.CLAY_RADIUS < 0:
-            self.position.y = Constants.CLAY_RADIUS
-        elif new_position[1] + Constants.CLAY_RADIUS > Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT:
-            self.position.y = Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT - Constants.CLAY_RADIUS
-        else:
-            self.position.y = new_position[1]
-
-        self.__updateBBox()
+        self.position = new_position
+        self._updateBBox()
 
     def setRadius(self, new_radius):
         self.radius = new_radius
-        self.__updateBBox()
+        self._updateBBox()
+    
+    def setMovable(self, state: bool):
+        self.movable = state
 
     def getPosition(self):
         return self.position
@@ -43,6 +33,9 @@ class Point():
 
     def getRadius(self):
         return self.radius
+    
+    def isMovable(self):
+        return self.movable
     
     def draw(self, surface):
         pygame.draw.circle(surface=surface, color=self.color, center=self.position, radius=self.radius)
