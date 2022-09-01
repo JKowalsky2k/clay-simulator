@@ -13,12 +13,20 @@ class EndPoint(Point.Point):
                 return point[1]
     
     def setPosition(self, new_position):
-        if new_position[0] < self.trajectory.getFirstPointPosition().x:
-            self.position.x = self.trajectory.getFirstPointPosition().x
-        elif new_position[0] > self.trajectory.getLastPointPosition().x:
-            self.position.x = self.trajectory.getLastPointPosition().x
-        else:
-            self.position.x = new_position[0]
+        if True == self.trajectory.getDirection():
+            if new_position[0] < self.trajectory.getFirstPointPosition().x:
+                self.position.x = self.trajectory.getFirstPointPosition().x
+            elif new_position[0] > self.trajectory.getLastPointPosition().x:
+                self.position.x = self.trajectory.getLastPointPosition().x
+            else:
+                self.position.x = new_position[0]
+        elif False == self.trajectory.getDirection():
+            if new_position[0] < self.trajectory.getLastPointPosition().x:
+                self.position.x = self.trajectory.getLastPointPosition().x
+            elif new_position[0] > self.trajectory.getFirstPointPosition().x:
+                self.position.x = self.trajectory.getFirstPointPosition().x
+            else:
+                self.position.x = new_position[0]            
 
         self.position = copy.copy(min(self.trajectory.getTrajectory(), key=lambda point: abs(point.x-self.position.x)))
 

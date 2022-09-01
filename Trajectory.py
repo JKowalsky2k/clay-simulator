@@ -106,3 +106,9 @@ class Trajectory():
     
     def getNumberOfPoints(self):
         return len(self.trajectory)
+
+    def getDirection(self):
+        diff = self.getFirstPointPosition().x - self.getLastPointPosition().x
+        # False = Left
+        # True  = Right
+        return False if diff > 0 else True
