@@ -1,6 +1,7 @@
-import enum
+from time import time
 import pygame
 import pygame_gui
+import enum
 import Trajectory
 import Constants
 import Point
@@ -24,7 +25,7 @@ class SimulationController:
         pygame.init()
 
         self.clock = pygame.time.Clock()
-        self.FPS = 120
+        self.FPS = 60
 
         self.screen = pygame.display.set_mode(size=(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
                                               flags=pygame.RESIZABLE)
@@ -36,7 +37,7 @@ class SimulationController:
     
         pygame.display.set_caption('Clay simulator (ver. 31.08.2022)')
 
-        self.update_clay = pygame.USEREVENT
+        self.update_clay = pygame.USEREVENT + 0
        
         self.trajectory = Trajectory.Trajectory()
         self.state = States.CONFIG
@@ -75,7 +76,7 @@ class SimulationController:
 
     def stateCONFIG(self) -> None:
         print(f"{self.state.name = }")
-        
+
         controls = []
 
         self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
@@ -173,7 +174,6 @@ class SimulationController:
             dt = self.clock.tick(self.FPS)
 
             for event in pygame.event.get():
-                # print(f"{event = }")
                 if event.type == pygame.QUIT:
                     self.state = States.EXIT
 
@@ -198,14 +198,13 @@ class SimulationController:
                         config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        if self.start_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
-                            print("a")
+                    if 1 == event.button:
+                        if True == self.start_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
                             self.start_point.setMovable(state=True)
-                        elif self.end_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
+                        elif True == self.end_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
                             self.end_point.setMovable(state=True)
                 elif event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
+                    if 1 == event.button:
                         self.start_point.setMovable(state=False)
                         self.end_point.setMovable(state=False)
                 elif event.type == pygame.MOUSEMOTION:
@@ -220,25 +219,25 @@ class SimulationController:
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     # Velocity
                     if event.ui_element == velocity_increase_button:
-                        if self.trajectory.getVelocity() < 100:
-                            self.trajectory.setVelocity(self.trajectory.getVelocity()+1)
+                        if self.trajectory.getVelocity() < Constants.VELOCITY_MAX:
+                            self.trajectory.setVelocity(self.trajectory.getVelocity() + Constants.VELOCITY_STEP)
                             velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
                     if event.ui_element == velocity_decrease_button:
                         if self.trajectory.getVelocity() > 0:
-                            self.trajectory.setVelocity(self.trajectory.getVelocity()-1)
+                            self.trajectory.setVelocity(self.trajectory.getVelocity() - Constants.VELOCITY_STEP)
                             velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
                     # Angle
                     if event.ui_element == angle_increase_button:
-                        if self.trajectory.getAngle() < 180:
-                            self.trajectory.setAngle(self.trajectory.getAngle()+7.5)
+                        if self.trajectory.getAngle() < Constants.ANGLE_MAX:
+                            self.trajectory.setAngle(self.trajectory.getAngle() + Constants.ANGLE_STEP)
                         else:
                             self.trajectory.setAngle(0)
                         angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
                     if event.ui_element == angle_decrease_button:
                         if self.trajectory.getAngle() > 0:
-                            self.trajectory.setAngle(self.trajectory.getAngle()-7.5)
+                            self.trajectory.setAngle(self.trajectory.getAngle() - Constants.ANGLE_STEP)
                         else:
-                            self.trajectory.setAngle(180)
+                            self.trajectory.setAngle(Constants.ANGLE_MAX)
                         angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
                     # Air Drag
                     if event.ui_element == air_drag_button:
@@ -249,7 +248,6 @@ class SimulationController:
                         else:
                             self.trajectory.setDrag(True)
                             air_drag_button.set_text("Disable")                        
-
                     # Start
                     if event.ui_element == start_button:
                         for control in controls:
@@ -257,7 +255,7 @@ class SimulationController:
                         self.state = States.SIMULATION
                     
                     self.trajectory.calculate()
-                    self.end_point.setPosition(self.trajectory.getLastPointPosition())
+                    self.end_point.updatePosition()
                 
                 self.manager.process_events(event)
 
@@ -265,22 +263,19 @@ class SimulationController:
 
             self.screen.fill(Constants.BLACK)
 
-            self.trajectory.draw(self.screen_surface, gap=Constants.CONFIG_TRAJECTORY_GAP)
+            self.trajectory.draw(surface=self.screen_surface, gap=Constants.CONFIG_TRAJECTORY_GAP)
             self.start_point.drawBBox(surface=self.screen_surface)
             self.start_point.draw(surface=self.screen_surface)
             self.end_point.drawBBox(surface=self.screen_surface)
             self.end_point.draw(surface=self.screen_surface)
 
-            self.manager.draw_ui(self.screen_surface)
+            self.manager.draw_ui(window_surface=self.screen_surface)
      
             pygame.display.flip()
 
     def stateSIMULATION(self) -> None:
         print(f"{self.state.name = }")
 
-        pygame.time.set_timer(self.update_clay, 1)
-
-        # size = Constants.CLAY_RADIUS
         visbility_of_characteristic_points = True
         is_pause = False
         store_delta_x = 0
@@ -289,7 +284,6 @@ class SimulationController:
 
         self.trajectory.setDt(1e-3)
         self.trajectory.calculate()
-        self.end_point.setPosition(self.trajectory.getLastPointPosition())
 
         controls = []
 
@@ -430,14 +424,14 @@ class SimulationController:
         
         while self.state == States.SIMULATION:
             dt = self.clock.tick(self.FPS)
+
             if self.isResolutionChanged():
                 self.updateResolution()
                 self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
                 self.screen_surface = pygame.display.get_surface()
                 hud_container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
                 
-                right_padding = 10
-                hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
+                hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
                 hud_container.set_dimensions((hud_container_min_width, Constants.HUD_HEIGHT))
                 hud_container.set_position(((Constants.SCREEN_WIDTH - hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
@@ -456,13 +450,6 @@ class SimulationController:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.state = States.EXIT
-
-                if event.type == self.update_clay:
-                    if idx + simulation_speed_step < self.trajectory.getNumberOfPoints():
-                        idx += simulation_speed_step
-                    else:
-                        idx = 0
-                    self.clay.setPosition(self.trajectory.getTrajectory()[idx])
 
                 if event.type == pygame_gui.UI_BUTTON_PRESSED:
                     # Size
@@ -516,7 +503,6 @@ class SimulationController:
                     # Reset
                     if event.ui_element == reset_button:
                         self.state = States.CONFIG
-                        pygame.time.set_timer(self.update_clay, 0)
                         for control in controls:
                             control.kill()
                         print(f"Killed all controls: {len(controls)}")                            
@@ -525,15 +511,18 @@ class SimulationController:
 
             self.manager.update(dt)
 
+            idx += simulation_speed_step * dt
+            self.clay.setPosition(self.trajectory.getPoint(idx))
+
             self.screen_surface.fill(Constants.BLACK)
             
-            if visbility_of_characteristic_points == True:
+            if True == visbility_of_characteristic_points:
                 self.trajectory.draw(self.screen_surface, gap=Constants.SIMULATION_TRAJECTORY_GAP)
-            self.start_point.draw(self.screen_surface)
+            self.start_point.draw(surface=self.screen_surface)
             self.end_point.draw(surface=self.screen_surface)
             self.clay.draw(surface=self.screen_surface)
 
-            self.manager.draw_ui(self.screen_surface)
+            self.manager.draw_ui(window_surface=self.screen_surface)
 
             pygame.display.flip()
 
@@ -547,13 +536,6 @@ class SimulationController:
 
     def translate(self, vector) -> pygame.math.Vector2:
         return pygame.math.Vector2(vector.x, Constants.SCREEN_HEIGHT - vector.y)
-
-    def translate_tuple(self, vector) -> tuple:
-        return (vector[0], Constants.SCREEN_WIDTH - vector[1])
-    
-    def translateToPixel(self, vector) -> tuple:
-        v = pygame.math.Vector2(vector.x, Constants.SCREEN_HEIGHT - vector.y)
-        return (int(v.x), int(v.y))
-
+        
     def run(self) -> None:
         self.stateMachine()

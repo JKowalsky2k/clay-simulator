@@ -97,6 +97,9 @@ class Trajectory():
     
     def getTrajectory(self):
         return self.trajectory
+
+    def getPoint(self, idx):
+        return self.trajectory[idx % self.getNumberOfPoints()]
     
     def getFirstPointPosition(self):
         return self.trajectory[0]
@@ -112,3 +115,4 @@ class Trajectory():
         # False = Left
         # True  = Right
         return False if diff > 0 else True
+
