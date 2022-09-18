@@ -20,6 +20,7 @@ class Point(pygame.sprite.Sprite):
             self.sprite = pygame.transform.scale(self.default_sprite, (2*self.radius, 2*self.radius))
         except Exception as error:
             print(f"Image texture not find ({error})")
+        self._updateSprite()
 
     def _updateBBox(self):
         self.bounding_box = pygame.Rect(self.position-self.center_offset, (2*self.radius, 2*self.radius))

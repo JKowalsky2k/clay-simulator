@@ -1,5 +1,4 @@
 import Point
-import Constants
 import copy
 import math
 

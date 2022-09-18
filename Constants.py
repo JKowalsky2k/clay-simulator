@@ -1,4 +1,4 @@
-import numpy
+import math
 
 MIN_SCREEN_WIDTH = 880
 MIN_SCREEN_HEIGHT = 800
@@ -10,18 +10,6 @@ HUD_HEIGHT = 100
 PADDING = 10
 BOTTOM_EDGE_OF_SCRREN_SURFACE = SCREEN_HEIGHT - HUD_HEIGHT
 
-CLAY_RADIUS = 7
-MASS = 0.145 # kg
-A = numpy.pi*0.0366**2 # surface of bullet m^2
-C = 0.47
-RHO = 1.2
-D = RHO*C*A/2
-
-ANGLE_MAX = 360
-ANGLE_STEP = 7.5
-VELOCITY_MAX = 150
-VELOCITY_STEP = 5
-
 ORANGE = (255, 165,   0)
 RED    = (255,   0,   0)
 BLUE   = (  0,   0, 255)
@@ -29,3 +17,4 @@ GREEN  = (  0, 255,   0)
 WHITE  = (255, 255, 255)
 BLACK  = (  0,   0,   0)
 PINK   = (255,  20, 147)
+BROWN  = (139,  69,   19)

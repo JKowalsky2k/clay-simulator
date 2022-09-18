@@ -9,7 +9,6 @@ class ControlsController:
         self.manager = manager
         self.trajectory = trajectory
         self.background = background
-        # self.create()
 
     def kill(self):
         for control in self.controls:

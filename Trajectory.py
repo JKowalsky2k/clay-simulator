@@ -1,7 +1,7 @@
 import pygame
 import Constants
-import numpy as np 
-import math 
+import TrajectorySettings
+import numpy
 import scipy.constants
 import copy
 
@@ -58,29 +58,29 @@ class Trajectory():
         if point.x < Constants.SCREEN_WIDTH and \
             point.x > 0 and \
             point.y > 0 and \
-            point.y < Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT:
+            point.y < Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE:
             return False
         return True
 
 
     def calculate(self):
         velocity = copy.copy(self.velocity)
-        velocity_x = np.cos(np.deg2rad(self.angle))*velocity
-        velocity_y = np.sin(np.deg2rad(self.angle))*velocity
+        velocity_x = numpy.cos(numpy.deg2rad(self.angle))*velocity
+        velocity_y = numpy.sin(numpy.deg2rad(self.angle))*velocity
 
         idx = 0
-        pos = np.zeros(shape=(1_000_000, 2))
+        pos = numpy.zeros(shape=(1_000_000, 2))
 
         while pos[idx, 1] >= -Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE:
             if self.drag:
-                ax = -(Constants.D/Constants.MASS)*velocity*velocity_x
-                ay = -scipy.constants.g-(Constants.D/Constants.MASS)*velocity*velocity_y
+                ax = -(TrajectorySettings.D/TrajectorySettings.MASS)*velocity*velocity_x
+                ay = -scipy.constants.g-(TrajectorySettings.D/TrajectorySettings.MASS)*velocity*velocity_y
             else:
                 ax = 0
                 ay = -scipy.constants.g
             velocity_x += ax * self.dt
             velocity_y += ay * self.dt
-            velocity = np.sqrt(velocity_x**2 + velocity_y**2)
+            velocity = numpy.sqrt(velocity_x**2 + velocity_y**2)
 
             pos[idx+1, 0] = pos[idx, 0] + velocity_x*self.dt + 0.5*ax*self.dt**2
             pos[idx+1, 1] = pos[idx, 1] + velocity_y*self.dt + 0.5*ay*self.dt**2

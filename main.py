@@ -1,6 +1,4 @@
-import pygame as pg
-from SimulationController import SimulationController
+import SimulationController
 
-sim = SimulationController()
-sim.run()
-
+simulation = SimulationController.SimulationController()
+simulation.run()
