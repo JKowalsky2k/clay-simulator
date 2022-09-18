@@ -7,6 +7,7 @@ import Point
 import StartPoint
 import EndPoint
 import BackgroundController
+import ConfigControlsController
 
 class States(enum.Enum):
     CONFIG = 0
@@ -44,10 +45,8 @@ class SimulationController(pygame.sprite.Sprite):
         self.size = Constants.CLAY_RADIUS
 
         self.backgorund = BackgroundController.BackgorundController(path="./images/backgrounds")
-        self.change_background = False
-        # self.background = pygame.transform.scale(self.default_background, (Constants.SCREEN_WIDTH, Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE))
 
-        # self.speech_recognizer = SpeechRecognizer.SpeechRecognizer()
+        self.configGUI = ConfigControlsController.ConfigGUI(manager=self.manager, trajectory=self.trajectory, background=self.backgorund)
 
         self.start_point = StartPoint.StartPoint( position=(Constants.SCREEN_WIDTH//3, Constants.SCREEN_HEIGHT/2), 
                                                   radius=Constants.CLAY_RADIUS,
@@ -87,118 +86,120 @@ class SimulationController(pygame.sprite.Sprite):
     def stateCONFIG(self) -> None:
         print(f"{self.state.name = }")
 
-        controls = []
+        # controls = []
 
         self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
-        config_hud_container = pygame_gui.core.UIContainer( relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT, Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT),
-                                                            container=self.manager.get_root_container(),
-                                                            manager=self.manager)
-        controls.append(config_hud_container)
+        self.configGUI.create()
+        self.configGUI.updateContainer()
+        # config_hud_container = pygame_gui.core.UIContainer( relative_rect=pygame.Rect(0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT, Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT),
+        #                                                     container=self.manager.get_root_container(),
+        #                                                     manager=self.manager)
+        # controls.append(config_hud_container)
 
-        # Section HUD Velocity
+        # # Section HUD Velocity
 
-        velocity_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(10, 10, 90, 20),
-                                                            text='Velocity', 
-                                                            manager=self.manager,
-                                                            container=config_hud_container)
-        controls.append(velocity_name_label)
+        # velocity_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(10, 10, 90, 20),
+        #                                                     text='Velocity', 
+        #                                                     manager=self.manager,
+        #                                                     container=config_hud_container)
+        # controls.append(velocity_name_label)
 
-        velocity_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(10, 40, 90, 20),
-                                                            text=f"{self.trajectory.getVelocity()}", 
-                                                            manager=self.manager,
-                                                            container=config_hud_container)
-        controls.append(velocity_value_label)
+        # velocity_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(10, 40, 90, 20),
+        #                                                     text=f"{self.trajectory.getVelocity()}", 
+        #                                                     manager=self.manager,
+        #                                                     container=config_hud_container)
+        # controls.append(velocity_value_label)
         
-        velocity_increase_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 70, 40, 20),
-                                                                text='+', 
-                                                                manager=self.manager,
-                                                                container=config_hud_container)
-        controls.append(velocity_increase_button)
+        # velocity_increase_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(10, 70, 40, 20),
+        #                                                         text='+', 
+        #                                                         manager=self.manager,
+        #                                                         container=config_hud_container)
+        # controls.append(velocity_increase_button)
         
-        velocity_decrease_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(60, 70, 40, 20),
-                                                                text='-', 
-                                                                manager=self.manager,
-                                                                container=config_hud_container)
-        controls.append(velocity_decrease_button)
+        # velocity_decrease_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(60, 70, 40, 20),
+        #                                                         text='-', 
+        #                                                         manager=self.manager,
+        #                                                         container=config_hud_container)
+        # controls.append(velocity_decrease_button)
 
-        # Section HUD Angle
+        # # Section HUD Angle
 
-        angle_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(110, 10, 90, 20),
-                                                        text='Angle (\u00B0)', 
-                                                        manager=self.manager,
-                                                        container=config_hud_container)
-        controls.append(angle_name_label)
+        # angle_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(110, 10, 90, 20),
+        #                                                 text='Angle (\u00B0)', 
+        #                                                 manager=self.manager,
+        #                                                 container=config_hud_container)
+        # controls.append(angle_name_label)
 
-        angle_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(110, 40, 90, 20),
-                                                        text=f"{round(self.trajectory.getAngle(), 2)}", 
-                                                        manager=self.manager,
-                                                        container=config_hud_container)
-        controls.append(angle_value_label)
+        # angle_value_label = pygame_gui.elements.UILabel( relative_rect=pygame.Rect(110, 40, 90, 20),
+        #                                                 text=f"{round(self.trajectory.getAngle(), 2)}", 
+        #                                                 manager=self.manager,
+        #                                                 container=config_hud_container)
+        # controls.append(angle_value_label)
         
-        angle_increase_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(110, 70, 40, 20),
-                                                            text='+', 
-                                                            manager=self.manager,
-                                                            container=config_hud_container)
-        controls.append(angle_increase_button)
+        # angle_increase_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(110, 70, 40, 20),
+        #                                                     text='+', 
+        #                                                     manager=self.manager,
+        #                                                     container=config_hud_container)
+        # controls.append(angle_increase_button)
         
-        angle_decrease_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(160, 70, 40, 20),
-                                                            text='-', 
-                                                            manager=self.manager,
-                                                            container=config_hud_container)
-        controls.append(angle_decrease_button)
+        # angle_decrease_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(160, 70, 40, 20),
+        #                                                     text='-', 
+        #                                                     manager=self.manager,
+        #                                                     container=config_hud_container)
+        # controls.append(angle_decrease_button)
 
-        # Section HUD Air Drag
+        # # Section HUD Air Drag
 
-        air_drag_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(210, 10, 90, 20),
-                                                            text='Air Drag', 
-                                                            manager=self.manager,
-                                                            container=config_hud_container)
-        controls.append(air_drag_name_label)
+        # air_drag_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(210, 10, 90, 20),
+        #                                                     text='Air Drag', 
+        #                                                     manager=self.manager,
+        #                                                     container=config_hud_container)
+        # controls.append(air_drag_name_label)
 
-        air_drag_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(210, 40, 90, 50),
-                                                        text='Enable', 
-                                                        manager=self.manager,
-                                                        container=config_hud_container)
-        air_drag_button.set_text("Disable") if self.trajectory.isDrag() else air_drag_button.set_text("Enable")
-        controls.append(air_drag_button)
+        # air_drag_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(210, 40, 90, 50),
+        #                                                 text='Enable', 
+        #                                                 manager=self.manager,
+        #                                                 container=config_hud_container)
+        # air_drag_button.set_text("Disable") if self.trajectory.isDrag() else air_drag_button.set_text("Enable")
+        # controls.append(air_drag_button)
 
-        # Section Background
+        # # Section Background
 
-        background_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(310, 10, 90, 20),
-                                                                text='Background', 
-                                                                manager=self.manager,
-                                                                container=config_hud_container)
-        controls.append(background_name_label)
+        # background_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(310, 10, 90, 20),
+        #                                                         text='Background', 
+        #                                                         manager=self.manager,
+        #                                                         container=config_hud_container)
+        # controls.append(background_name_label)
 
-        backgorund_value_label = pygame_gui.elements.UILabel(   relative_rect=pygame.Rect(310, 40, 90, 20),
-                                                                text=f"{1}", 
-                                                                manager=self.manager,
-                                                                container=config_hud_container)
-        controls.append(backgorund_value_label)
+        # backgorund_value_label = pygame_gui.elements.UILabel(   relative_rect=pygame.Rect(310, 40, 90, 20),
+        #                                                         text=f"{1}", 
+        #                                                         manager=self.manager,
+        #                                                         container=config_hud_container)
+        # controls.append(backgorund_value_label)
 
-        background_button_previous = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(310, 70, 40, 20),
-                                                                    text='<', 
-                                                                    manager=self.manager,
-                                                                    container=config_hud_container)
-        controls.append(background_button_previous)
+        # background_button_previous = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(310, 70, 40, 20),
+        #                                                             text='<', 
+        #                                                             manager=self.manager,
+        #                                                             container=config_hud_container)
+        # controls.append(background_button_previous)
 
-        background_button_next = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(360, 70, 40, 20),
-                                                                text='>',
-                                                                manager=self.manager,
-                                                                container=config_hud_container)
-        controls.append(background_button_next)
+        # background_button_next = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(360, 70, 40, 20),
+        #                                                         text='>',
+        #                                                         manager=self.manager,
+        #                                                         container=config_hud_container)
+        # controls.append(background_button_next)
 
-        # Section HUD Start
+        # # Section HUD Start
 
-        last_control = start_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(410, 10, 90, 80),
-                                                                    text='Start', 
-                                                                    manager=self.manager,
-                                                                    container=config_hud_container)
-        controls.append(start_button)
+        # last_control = start_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(410, 10, 90, 80),
+        #                                                             text='Start', 
+        #                                                             manager=self.manager,
+        #                                                             container=config_hud_container)
+        # controls.append(start_button)
 
-        config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
-        config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
-        config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
+        # config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
+        # config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
+        # config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
         self.trajectory.setDt(1e-2)
         self.trajectory.setOffset(self.start_point.getPosition())
@@ -226,11 +227,13 @@ class SimulationController(pygame.sprite.Sprite):
                         self.updateResolution()
                         self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
                         self.screen_surface = pygame.display.get_surface()
-                        config_hud_container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
+
+                        self.configGUI.updateContainer()
+                        # config_hud_container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
                         
-                        config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
-                        config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
-                        config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
+                        # config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
+                        # config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
+                        # config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if 1 == event.button:
@@ -250,53 +253,60 @@ class SimulationController(pygame.sprite.Sprite):
                         self.end_point.updatePosition()
                     elif True == self.end_point.isMovable():
                         self.end_point.setPosition(pygame.mouse.get_pos())
-
-                if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                    # Velocity
-                    if event.ui_element == velocity_increase_button:
-                        if self.trajectory.getVelocity() < Constants.VELOCITY_MAX:
-                            self.trajectory.setVelocity(self.trajectory.getVelocity() + Constants.VELOCITY_STEP)
-                            velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
-                    if event.ui_element == velocity_decrease_button:
-                        if self.trajectory.getVelocity() > 0:
-                            self.trajectory.setVelocity(self.trajectory.getVelocity() - Constants.VELOCITY_STEP)
-                            velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
-                    # Angle
-                    if event.ui_element == angle_increase_button:
-                        if self.trajectory.getAngle() < Constants.ANGLE_MAX:
-                            self.trajectory.setAngle(self.trajectory.getAngle() + Constants.ANGLE_STEP)
-                        else:
-                            self.trajectory.setAngle(0)
-                        angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
-                    if event.ui_element == angle_decrease_button:
-                        if self.trajectory.getAngle() > 0:
-                            self.trajectory.setAngle(self.trajectory.getAngle() - Constants.ANGLE_STEP)
-                        else:
-                            self.trajectory.setAngle(Constants.ANGLE_MAX)
-                        angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
-                    # Air Drag
-                    if event.ui_element == air_drag_button:
-                        if self.trajectory.isDrag() == True:
-                            self.trajectory.setDrag(False)
-                            air_drag_button.set_text("Enable")
-                        else:
-                            self.trajectory.setDrag(True)
-                            air_drag_button.set_text("Disable")
-                    # Background
-                    if event.ui_element == background_button_next:
-                        self.backgorund.next()
-                        backgorund_value_label.set_text(f"{self.backgorund.getBackgroundIndex()}")
-                    if event.ui_element == background_button_previous:
-                        self.backgorund.previous()
-                        backgorund_value_label.set_text(f"{self.backgorund.getBackgroundIndex()}")               
-                    # Start
-                    if event.ui_element == start_button:
-                        for control in controls:
-                            control.kill()
-                        self.state = States.SIMULATION
-                    
+                
+                status = self.configGUI.event(event=event)
+                if status == False:
                     self.trajectory.calculate()
                     self.end_point.updatePosition()
+                elif status == True:
+                    self.state = States.SIMULATION
+
+                # if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                #     # Velocity
+                #     if event.ui_element == velocity_increase_button:
+                #         if self.trajectory.getVelocity() < Constants.VELOCITY_MAX:
+                #             self.trajectory.setVelocity(self.trajectory.getVelocity() + Constants.VELOCITY_STEP)
+                #             velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
+                #     if event.ui_element == velocity_decrease_button:
+                #         if self.trajectory.getVelocity() > 0:
+                #             self.trajectory.setVelocity(self.trajectory.getVelocity() - Constants.VELOCITY_STEP)
+                #             velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
+                #     # Angle
+                #     if event.ui_element == angle_increase_button:
+                #         if self.trajectory.getAngle() < Constants.ANGLE_MAX:
+                #             self.trajectory.setAngle(self.trajectory.getAngle() + Constants.ANGLE_STEP)
+                #         else:
+                #             self.trajectory.setAngle(0)
+                #         angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
+                #     if event.ui_element == angle_decrease_button:
+                #         if self.trajectory.getAngle() > 0:
+                #             self.trajectory.setAngle(self.trajectory.getAngle() - Constants.ANGLE_STEP)
+                #         else:
+                #             self.trajectory.setAngle(Constants.ANGLE_MAX)
+                #         angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
+                #     # Air Drag
+                #     if event.ui_element == air_drag_button:
+                #         if self.trajectory.isDrag() == True:
+                #             self.trajectory.setDrag(False)
+                #             air_drag_button.set_text("Enable")
+                #         else:
+                #             self.trajectory.setDrag(True)
+                #             air_drag_button.set_text("Disable")
+                #     # Background
+                #     if event.ui_element == background_button_next:
+                #         self.backgorund.next()
+                #         backgorund_value_label.set_text(f"{self.backgorund.getBackgroundIndex()}")
+                #     if event.ui_element == background_button_previous:
+                #         self.backgorund.previous()
+                #         backgorund_value_label.set_text(f"{self.backgorund.getBackgroundIndex()}")               
+                #     # Start
+                #     if event.ui_element == start_button:
+                #         for control in controls:
+                #             control.kill()
+                #         self.state = States.SIMULATION
+                    
+                    # self.trajectory.calculate()
+                    # self.end_point.updatePosition()
                 
                 self.manager.process_events(event)
 
