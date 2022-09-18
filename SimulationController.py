@@ -1,4 +1,3 @@
-from time import time
 import pygame
 import pygame_gui
 import enum
@@ -7,6 +6,7 @@ import Constants
 import Point
 import StartPoint
 import EndPoint
+import BackgroundController
 
 class States(enum.Enum):
     CONFIG = 0
@@ -20,12 +20,13 @@ class ConfigStates(enum.Enum):
     APOGEUM = 2
     END = 3
 
-class SimulationController:
+class SimulationController(pygame.sprite.Sprite):
     def __init__(self) -> None:
         pygame.init()
+        pygame.sprite.Sprite.__init__(self)
 
         self.clock = pygame.time.Clock()
-        self.FPS = 60
+        self.FPS = 0
 
         self.screen = pygame.display.set_mode(size=(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
                                               flags=pygame.RESIZABLE)
@@ -35,14 +36,18 @@ class SimulationController:
         self.manager = pygame_gui.UIManager(window_resolution=(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
                                             theme_path="themes/theme.json")
     
-        pygame.display.set_caption('Clay simulator (ver. 31.08.2022)')
-
-        self.update_clay = pygame.USEREVENT + 0
+        pygame.display.set_caption('Clay simulator (ver. 17.09.2022)')
        
         self.trajectory = Trajectory.Trajectory()
         self.state = States.CONFIG
 
         self.size = Constants.CLAY_RADIUS
+
+        self.backgorund = BackgroundController.BackgorundController(path="./images/backgrounds")
+        self.change_background = False
+        # self.background = pygame.transform.scale(self.default_background, (Constants.SCREEN_WIDTH, Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE))
+
+        # self.speech_recognizer = SpeechRecognizer.SpeechRecognizer()
 
         self.start_point = StartPoint.StartPoint( position=(Constants.SCREEN_WIDTH//3, Constants.SCREEN_HEIGHT/2), 
                                                   radius=Constants.CLAY_RADIUS,
@@ -56,6 +61,11 @@ class SimulationController:
                                 radius=Constants.CLAY_RADIUS,
                                 color=Constants.ORANGE,
                                 trajectory=self.trajectory)
+
+        self.trajectory.setDt(1e-2)
+        self.trajectory.setOffset(self.start_point.getPosition())
+        self.trajectory.calculate()
+        self.end_point.setPosition(self.trajectory.getLastPointPosition())
 
     def updateResolution(self):
         Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = self.screen.get_size()
@@ -152,23 +162,47 @@ class SimulationController:
         air_drag_button.set_text("Disable") if self.trajectory.isDrag() else air_drag_button.set_text("Enable")
         controls.append(air_drag_button)
 
+        # Section Background
+
+        background_name_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(310, 10, 90, 20),
+                                                                text='Background', 
+                                                                manager=self.manager,
+                                                                container=config_hud_container)
+        controls.append(background_name_label)
+
+        backgorund_value_label = pygame_gui.elements.UILabel(   relative_rect=pygame.Rect(310, 40, 90, 20),
+                                                                text=f"{1}", 
+                                                                manager=self.manager,
+                                                                container=config_hud_container)
+        controls.append(backgorund_value_label)
+
+        background_button_previous = pygame_gui.elements.UIButton(  relative_rect=pygame.Rect(310, 70, 40, 20),
+                                                                    text='<', 
+                                                                    manager=self.manager,
+                                                                    container=config_hud_container)
+        controls.append(background_button_previous)
+
+        background_button_next = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(360, 70, 40, 20),
+                                                                text='>',
+                                                                manager=self.manager,
+                                                                container=config_hud_container)
+        controls.append(background_button_next)
+
         # Section HUD Start
 
-        last_control = start_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(310, 10, 90, 80),
+        last_control = start_button = pygame_gui.elements.UIButton( relative_rect=pygame.Rect(410, 10, 90, 80),
                                                                     text='Start', 
                                                                     manager=self.manager,
                                                                     container=config_hud_container)
         controls.append(start_button)
 
-        right_padding = 10
-        config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
+        config_hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
         config_hud_container.set_dimensions((config_hud_container_min_width, Constants.HUD_HEIGHT))
         config_hud_container.set_position(((Constants.SCREEN_WIDTH - config_hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
 
         self.trajectory.setDt(1e-2)
         self.trajectory.setOffset(self.start_point.getPosition())
         self.trajectory.calculate()
-        self.end_point.setPosition(self.trajectory.getLastPointPosition())
 
         while self.state == States.CONFIG:
             dt = self.clock.tick(self.FPS)
@@ -186,6 +220,7 @@ class SimulationController:
                         if screen_height < Constants.MIN_SCREEN_HEIGHT:
                             screen_height = Constants.MIN_SCREEN_HEIGHT
                         Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = screen_width, screen_height
+                        Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE = Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT
                         self.screen = pygame.display.set_mode(  size=(screen_width, screen_height), 
                                                                 flags=pygame.RESIZABLE)
                         self.updateResolution()
@@ -199,10 +234,10 @@ class SimulationController:
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if 1 == event.button:
-                        if True == self.start_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
-                            self.start_point.setMovable(state=True)
-                        elif True == self.end_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
+                        if True == self.end_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
                             self.end_point.setMovable(state=True)
+                        elif True == self.start_point.getBoundingBox().collidepoint(pygame.mouse.get_pos()):
+                            self.start_point.setMovable(state=True)
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if 1 == event.button:
                         self.start_point.setMovable(state=False)
@@ -244,10 +279,16 @@ class SimulationController:
                         if self.trajectory.isDrag() == True:
                             self.trajectory.setDrag(False)
                             air_drag_button.set_text("Enable")
-
                         else:
                             self.trajectory.setDrag(True)
-                            air_drag_button.set_text("Disable")                        
+                            air_drag_button.set_text("Disable")
+                    # Background
+                    if event.ui_element == background_button_next:
+                        self.backgorund.next()
+                        backgorund_value_label.set_text(f"{self.backgorund.getBackgroundIndex()}")
+                    if event.ui_element == background_button_previous:
+                        self.backgorund.previous()
+                        backgorund_value_label.set_text(f"{self.backgorund.getBackgroundIndex()}")               
                     # Start
                     if event.ui_element == start_button:
                         for control in controls:
@@ -261,14 +302,15 @@ class SimulationController:
 
             self.manager.update(dt)
 
-            self.screen.fill(Constants.BLACK)
+            self.backgorund.draw(surface=self.screen_surface)
 
-            self.trajectory.draw(surface=self.screen_surface, gap=Constants.CONFIG_TRAJECTORY_GAP)
-            self.start_point.drawBBox(surface=self.screen_surface)
+            self.trajectory.drawAll(surface=self.screen_surface)
             self.start_point.draw(surface=self.screen_surface)
-            self.end_point.drawBBox(surface=self.screen_surface)
             self.end_point.draw(surface=self.screen_surface)
 
+            hud_background = pygame.Surface((Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT))
+            hud_background.fill(Constants.BLACK)
+            self.screen_surface.blit(hud_background, (0, Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE))
             self.manager.draw_ui(window_surface=self.screen_surface)
      
             pygame.display.flip()
@@ -277,13 +319,17 @@ class SimulationController:
         print(f"{self.state.name = }")
 
         visbility_of_characteristic_points = True
-        is_pause = False
+        pause = False
         store_delta_x = 0
         simulation_speed_step = 1
-        idx = 0
+        current_index = 0
 
-        self.trajectory.setDt(1e-3)
+        start = False
+
+        self.trajectory.setDt(new_dt=0.0025)
         self.trajectory.calculate()
+        self.end_point.fixPosition()
+        self.trajectory.setEndIndex(end_index=self.trajectory.getIndex(self.end_point.getPosition()))
 
         controls = []
 
@@ -417,8 +463,7 @@ class SimulationController:
                                                                     container=hud_container)
         controls.append(reset_button)
 
-        right_padding = 10
-        hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + right_padding
+        hud_container_min_width = last_control.get_abs_rect()[0] + last_control.get_abs_rect()[2] + Constants.PADDING
         hud_container.set_dimensions((hud_container_min_width, Constants.HUD_HEIGHT))
         hud_container.set_position(((Constants.SCREEN_WIDTH - hud_container_min_width) // 2, Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT))
         
@@ -426,6 +471,14 @@ class SimulationController:
             dt = self.clock.tick(self.FPS)
 
             if self.isResolutionChanged():
+                if screen_width < Constants.MIN_SCREEN_WIDTH:
+                    screen_width = Constants.MIN_SCREEN_WIDTH
+                if screen_height < Constants.MIN_SCREEN_HEIGHT:
+                    screen_height = Constants.MIN_SCREEN_HEIGHT
+                Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT = screen_width, screen_height
+                Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE = Constants.SCREEN_HEIGHT - Constants.HUD_HEIGHT
+                self.screen = pygame.display.set_mode(  size=(screen_width, screen_height), 
+                                                        flags=pygame.RESIZABLE)
                 self.updateResolution()
                 self.manager.set_window_resolution((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
                 self.screen_surface = pygame.display.get_surface()
@@ -486,14 +539,14 @@ class SimulationController:
                             visibility_button.set_text("Disable")
                     # Pause
                     if event.ui_element == pause_button:
-                        if is_pause == True:
-                            is_pause = False
+                        if pause == True:
+                            pause = False
                             pause_button.set_text("Enable")
                             simulation_speed_increase_button.enable()
                             simulation_speed_decrease_button.enable()
                             simulation_speed_step = store_delta_x
                         else:
-                            is_pause = True
+                            pause = True
                             store_delta_x = simulation_speed_step
                             simulation_speed_step = 0
                             pause_button.set_text("Disable")
@@ -511,17 +564,27 @@ class SimulationController:
 
             self.manager.update(dt)
 
-            idx += simulation_speed_step * dt
-            self.clay.setPosition(self.trajectory.getPoint(idx))
+            if current_index > self.trajectory.getIndex(self.end_point.getPosition()):
+                current_index = 0
+                self.clay.setPosition(self.trajectory.getPoint(current_index))
+                print("Next!")
 
-            self.screen_surface.fill(Constants.BLACK)
+            current_index += simulation_speed_step * dt
+            if current_index > self.trajectory.getEndIndex():
+                current_index = 0
+            self.clay.setPosition(self.trajectory.getPoint(current_index))
             
-            if True == visbility_of_characteristic_points:
-                self.trajectory.draw(self.screen_surface, gap=Constants.SIMULATION_TRAJECTORY_GAP)
-            self.start_point.draw(surface=self.screen_surface)
-            self.end_point.draw(surface=self.screen_surface)
-            self.clay.draw(surface=self.screen_surface)
+            self.screen_surface.blit(pygame.transform.scale(self.current_background, (Constants.SCREEN_WIDTH, Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE)), (0, 0))
 
+            if True == visbility_of_characteristic_points:
+                self.trajectory.draw(self.screen_surface)
+                self.start_point.draw(surface=self.screen_surface)
+                self.end_point.draw(surface=self.screen_surface)
+            self.clay.drawSprite(surface=self.screen_surface)
+
+            hud_background = pygame.Surface((Constants.SCREEN_WIDTH, Constants.HUD_HEIGHT))
+            hud_background.fill(Constants.BLACK)
+            self.screen_surface.blit(hud_background, (0, Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE))
             self.manager.draw_ui(window_surface=self.screen_surface)
 
             pygame.display.flip()
@@ -536,6 +599,6 @@ class SimulationController:
 
     def translate(self, vector) -> pygame.math.Vector2:
         return pygame.math.Vector2(vector.x, Constants.SCREEN_HEIGHT - vector.y)
-        
+
     def run(self) -> None:
         self.stateMachine()

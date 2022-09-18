@@ -1,43 +1,34 @@
-import copy
-class A:
-    def __init__(self, b) -> None:
-        self.a = copy.copy(b)
+from shutil import which
+import speech_recognition as sr
+import pyttsx3 as tts
 
-    def get(self):
-        return self.a.get()
+r = sr.Recognizer()
+engine = tts.init()
+engine.setProperty('rate', 125)
 
-    def inc(self):
-        self.a.b += 1
+def say(text):
+    engine.say(text)
+    engine.runAndWait()
 
-class B:
-    def __init__(self) -> None:
-        self.b = 0
+def getText():
+    with sr.Microphone() as source:
+        try:
+            print("Listen...")
+            audio = r.listen(source)
+            text = r.recognize_google(audio, language="pl-PL")
+            if text != "":
+                return text
+            else: 
+                return 0
+        except:
+            return 0
 
-    def set(self, bb):
-        self.b = bb
-    
-    def get(self):
-        return self.b
-    
-    def inc(self):
-        self.b += 1
-
-b = B()
-a = A(b)
-
-print(f"{b.get() = }")
-print(f"{a.get() = }")
-
-b.inc()
-
-print(f"{b.get() = }")
-print(f"{a.get() = }")
-
-a.inc()
-
-print(f"{b.get() = }")
-print(f"{a.get() = }")
-
-b.set(b.get()+1)
-print(f"{b.get() = }")
-print(f"{a.get() = }")
+while True:
+    txt = getText()
+    if not txt == 0:
+        print(txt)
+        say(txt)
+        break
+    else:
+        print("Fail! :c")
+        continue

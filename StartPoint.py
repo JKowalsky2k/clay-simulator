@@ -21,3 +21,4 @@ class StartPoint(Point.Point):
             self.position.y = new_position[1]
 
         self._updateBBox()
+        self._updateSprite()

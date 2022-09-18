@@ -14,6 +14,8 @@ class Trajectory():
         self.drag = False
         self.dt = 1e-3
 
+        self.end_index = 0
+
     def setAngle(self, new_angle):
         self.angle = new_angle
     
@@ -44,6 +46,12 @@ class Trajectory():
 
     def getDt(self):
         return self.dt
+
+    def setEndIndex(self, end_index):
+        self.end_index = end_index
+
+    def getEndIndex(self):
+        return self.end_index
     
     def _checkWhenOutOfScreen(self, point):
         point = pygame.math.Vector2(point[0], -point[1]) + self.offset
@@ -87,9 +95,25 @@ class Trajectory():
 
         self.trajectory = [pygame.math.Vector2(point[0], -point[1]) + self.offset for point in pos]
 
-    def draw(self, surface, gap):
+    def drawAll(self, surface, gap=Constants.CONFIG_TRAJECTORY_GAP):
         for idx in range(self.getNumberOfPoints()):
             if idx % gap == 0:
+                pygame.draw.circle(surface=surface, 
+                                   color=Constants.BLACK, 
+                                   center=self.trajectory[idx], 
+                                   radius=4)
+                pygame.draw.circle(surface=surface, 
+                                   color=Constants.WHITE, 
+                                   center=self.trajectory[idx], 
+                                   radius=1)
+
+    def draw(self, surface, gap=Constants.SIMULATION_TRAJECTORY_GAP):
+        for idx in range(self.end_index):
+            if idx % gap == 0:
+                pygame.draw.circle(surface=surface, 
+                                   color=Constants.BLACK, 
+                                   center=self.trajectory[idx], 
+                                   radius=4)
                 pygame.draw.circle(surface=surface, 
                                    color=Constants.WHITE, 
                                    center=self.trajectory[idx], 
@@ -99,7 +123,10 @@ class Trajectory():
         return self.trajectory
 
     def getPoint(self, idx):
-        return self.trajectory[idx % self.getNumberOfPoints()]
+        return self.trajectory[idx]
+    
+    def getIndex(self, point):
+        return self.trajectory.index(point)
     
     def getFirstPointPosition(self):
         return self.trajectory[0]
