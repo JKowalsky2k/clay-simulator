@@ -18,12 +18,6 @@ class States(enum.Enum):
     RESET = 2
     EXIT = 3
 
-class ConfigStates(enum.Enum):
-    START = 0
-    STOP = 1
-    APOGEUM = 2
-    END = 3
-
 class SimulationController(pygame.sprite.Sprite):
     def __init__(self) -> None:
         pygame.init()
