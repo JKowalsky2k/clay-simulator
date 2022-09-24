@@ -73,8 +73,8 @@ class Trajectory():
 
         while pos[idx, 1] >= -Constants.BOTTOM_EDGE_OF_SCRREN_SURFACE:
             if self.drag:
-                ax = -(TrajectorySettings.D/TrajectorySettings.MASS)*velocity*velocity_x
-                ay = -scipy.constants.g-(TrajectorySettings.D/TrajectorySettings.MASS)*velocity*velocity_y
+                ax = -(TrajectorySettings.D / TrajectorySettings.MASS) * velocity * velocity_x
+                ay = -scipy.constants.g - (TrajectorySettings.D / TrajectorySettings.MASS) * velocity*velocity_y
             else:
                 ax = 0
                 ay = -scipy.constants.g
@@ -85,7 +85,6 @@ class Trajectory():
             pos[idx+1, 0] = pos[idx, 0] + velocity_x*self.dt + 0.5*ax*self.dt**2
             pos[idx+1, 1] = pos[idx, 1] + velocity_y*self.dt + 0.5*ay*self.dt**2
             
-            # optymalization
             if True == self._checkWhenOutOfScreen(pos[idx+1, :]):
                 break
 
