@@ -31,6 +31,7 @@ class Trajectory():
 
     def setOffset(self, new_offset):
         self.offset = new_offset
+        # self.offset = self.getFirstPointPosition() - new_offset
 
     def getOffset(self):
         return self.offset

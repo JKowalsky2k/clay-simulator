@@ -24,7 +24,7 @@ class SimulationController(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.clock = pygame.time.Clock()
-        self.FPS = 0
+        self.FPS = 60
 
         self.screen = pygame.display.set_mode(size=(Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT), 
                                               flags=pygame.RESIZABLE)
