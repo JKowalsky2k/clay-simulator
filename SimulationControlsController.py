@@ -3,11 +3,14 @@ import pygame_gui
 import ControlsController
 import Constants
 import SimulationSettings
+import json
 
 class SimulationGUI(ControlsController.ControlsController):
     def __init__(self, manager, trajectory, background, clay) -> None:
         super().__init__(manager, trajectory, background)
         self.clay = clay
+        with open("settings/settings.json") as settings_file:
+            self.settings = json.load(settings_file)
     
     def updateContainer(self):
         self.container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
@@ -144,26 +147,27 @@ class SimulationGUI(ControlsController.ControlsController):
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             # Size
             if event.ui_element == self.size_increase_button:
-                if SimulationSettings.CLAY_SIZE < 40:
-                    SimulationSettings.CLAY_SIZE += 1
+                if SimulationSettings.CLAY_SIZE < self.settings["clay_size"]["max"]:
+                    SimulationSettings.CLAY_SIZE += self.settings["clay_size"]["step"]
                     self.size_value_label.set_text(f"{round(SimulationSettings.CLAY_SIZE, 2)}")
                     self.clay.setRadius(SimulationSettings.CLAY_SIZE)
             if event.ui_element == self.size_decrease_button:
-                if SimulationSettings.CLAY_SIZE > 2:
-                    SimulationSettings.CLAY_SIZE -= 1
+                if SimulationSettings.CLAY_SIZE > self.settings["clay_size"]["min"]:
+                    SimulationSettings.CLAY_SIZE -= self.settings["clay_size"]["step"]
                     self.size_value_label.set_text(f"{round(SimulationSettings.CLAY_SIZE, 2)}")
                     self.clay.setRadius(SimulationSettings.CLAY_SIZE)
             # Simulation Speed
             if event.ui_element == self.simulation_speed_increase_button:
-                if SimulationSettings.SPEED < 20:
-                    SimulationSettings.SPEED += 1
+                if SimulationSettings.SPEED < self.settings["simulation_speed"]["max"]:
+                    SimulationSettings.SPEED += self.settings["simulation_speed"]["step"]
                     if SimulationSettings.SPEED > 0:
                         self.pause_button.enable()
                     self.simulation_speed_value_label.set_text(f"{SimulationSettings.SPEED}")
             if event.ui_element == self.simulation_speed_decrease_button:
                 if SimulationSettings.SPEED > 0:
-                    SimulationSettings.SPEED -= 1
-                    if SimulationSettings.SPEED == 0:
+                    SimulationSettings.SPEED -= self.settings["simulation_speed"]["step"]
+                    if SimulationSettings.SPEED <= 0:
+                        SimulationSettings.SPEED = 0
                         self.pause_button.disable()
                     self.simulation_speed_value_label.set_text(f"{SimulationSettings.SPEED}")
             # Visibility

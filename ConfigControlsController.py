@@ -3,10 +3,13 @@ import pygame_gui
 import ControlsController
 import Constants
 import TrajectorySettings
+import json
 
 class ConfigGUI(ControlsController.ControlsController):
     def __init__(self, manager, trajectory, background) -> None:
         super().__init__(manager, trajectory, background)
+        with open("settings/settings.json") as settings_file:
+            self.settings = json.load(settings_file)
 
     def updateContainer(self):
         self.container.set_position((0, Constants.SCREEN_HEIGHT-Constants.HUD_HEIGHT))
@@ -110,26 +113,26 @@ class ConfigGUI(ControlsController.ControlsController):
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             # Velocity
             if event.ui_element == self.velocity_increase_button:
-                if self.trajectory.getVelocity() < TrajectorySettings.VELOCITY_MAX:
-                    self.trajectory.setVelocity(self.trajectory.getVelocity() + TrajectorySettings.VELOCITY_STEP)
+                if self.trajectory.getVelocity() < self.settings["velocity"]["max"]:
+                    self.trajectory.setVelocity(self.trajectory.getVelocity() + self.settings["velocity"]["step"])
                     self.velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
             if event.ui_element == self.velocity_decrease_button:
                 if self.trajectory.getVelocity() > 0:
-                    self.trajectory.setVelocity(self.trajectory.getVelocity() - TrajectorySettings.VELOCITY_STEP)
+                    self.trajectory.setVelocity(self.trajectory.getVelocity() - self.settings["velocity"]["step"])
                     self.velocity_value_label.set_text(f"{self.trajectory.getVelocity()}")
             # Angle
             if event.ui_element == self.angle_increase_button:
-                if self.trajectory.getAngle() < TrajectorySettings.ANGLE_MAX:
-                    self.trajectory.setAngle(self.trajectory.getAngle() + TrajectorySettings.ANGLE_STEP)
+                if self.trajectory.getAngle() < self.settings["angle"]["max"]:
+                    self.trajectory.setAngle(self.trajectory.getAngle() + self.settings["angle"]["step"])
                 else:
                     self.trajectory.setAngle(0)
-                self.angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
+                self.angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 4)}")
             if event.ui_element == self.angle_decrease_button:
                 if self.trajectory.getAngle() > 0:
-                    self.trajectory.setAngle(self.trajectory.getAngle() - TrajectorySettings.ANGLE_STEP)
+                    self.trajectory.setAngle(self.trajectory.getAngle() - self.settings["angle"]["step"])
                 else:
-                    self.trajectory.setAngle(TrajectorySettings.ANGLE_MAX)
-                self.angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 2)}")
+                    self.trajectory.setAngle(self.settings["angle"]["max"])
+                self.angle_value_label.set_text(f"{round(self.trajectory.getAngle(), 4)}")
             # Air Drag
             if event.ui_element == self.air_drag_button:
                 if self.trajectory.isDrag() == True:
