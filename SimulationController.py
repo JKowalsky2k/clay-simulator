@@ -1,3 +1,4 @@
+from tracemalloc import start
 import pygame
 import pygame_gui
 import enum
@@ -165,6 +166,7 @@ class SimulationController(pygame.sprite.Sprite):
         print(f"{self.state.name = }")
 
         SimulationSettings.INDEX = 0
+        start_mode = False
 
         self.trajectory.setDt(new_dt=0.0025)
         self.trajectory.calculate()
@@ -207,6 +209,8 @@ class SimulationController(pygame.sprite.Sprite):
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.state = States.EXIT
+                    if event.key == pygame.K_SPACE:
+                        start_mode = True
 
                 state = self.simulationGUI.event(event)
                 if True == state:
@@ -216,14 +220,15 @@ class SimulationController(pygame.sprite.Sprite):
 
             self.manager.update(dt)
 
-            if SimulationSettings.INDEX > self.trajectory.getIndex(self.end_point.getPosition()):
-                SimulationSettings.INDEX = 0
-                self.clay.setPosition(self.trajectory.getPoint(SimulationSettings.INDEX))
-                print("Next!")
+            if SimulationSettings.START_MODE == "Auto":
+                start_mode = True
 
-            SimulationSettings.INDEX += SimulationSettings.SPEED * dt
-            if SimulationSettings.INDEX > self.trajectory.getEndIndex():
-                SimulationSettings.INDEX = 0
+            if True == start_mode:
+                SimulationSettings.INDEX += SimulationSettings.SPEED * dt
+                if SimulationSettings.INDEX > self.trajectory.getEndIndex():
+                    SimulationSettings.INDEX = 0
+                    if SimulationSettings.START_MODE == "Manual":
+                        start_mode = False
             self.clay.setPosition(self.trajectory.getPoint(SimulationSettings.INDEX))
             
             self.backgorund.draw(surface=self.screen_surface)

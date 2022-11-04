@@ -114,6 +114,8 @@ class SimulationGUI(ControlsController.ControlsController):
                                                                     container=self.container)
         self.controls.append(self.background_button_next)
 
+
+
         # Section HUD Trajectory Selection
         self.trajectory_name_label = pygame_gui.elements.UILabel(   relative_rect=pygame.Rect(510, 10, 90, 20),
                                                                     text='Trajectory', 
@@ -135,9 +137,21 @@ class SimulationGUI(ControlsController.ControlsController):
                                                                     manager=self.manager,
                                                                     container=self.container)
         self.controls.append(self.trajectory_button_next)
+        
+        # Section Start Mode
+        self.start_mode_label = pygame_gui.elements.UILabel(  relative_rect=pygame.Rect(610, 10, 90, 20),
+                                                        text='Start Mode', 
+                                                        manager=self.manager,
+                                                        container=self.container)
+        self.controls.append(self.start_mode_label)
+        self.start_mode_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect(610, 40, 90, 50),
+                                                              text=SimulationSettings.START_MODE, 
+                                                              manager=self.manager,
+                                                              container=self.container)
+        self.controls.append(self.start_mode_button)
 
         # Section HUD Reset
-        self.last_control = self.reset_button = pygame_gui.elements.UIButton(   relative_rect=pygame.Rect(610, 10, 90, 80),
+        self.last_control = self.reset_button = pygame_gui.elements.UIButton(   relative_rect=pygame.Rect(710, 10, 90, 80),
                                                                                 text='Reset', 
                                                                                 manager=self.manager,
                                                                                 container=self.container)
@@ -200,7 +214,16 @@ class SimulationGUI(ControlsController.ControlsController):
                 self.background_value_label.set_text(f"{self.background.getBackgroundIndex()}")
             if event.ui_element == self.background_button_previous:
                 self.background.previous()
-                self.background_value_label.set_text(f"{self.background.getBackgroundIndex()}")   
+                self.background_value_label.set_text(f"{self.background.getBackgroundIndex()}")
+            # Start Mode
+            if event.ui_element == self.start_mode_button:
+                if SimulationSettings.START_MODE == "Auto":
+                    self.start_mode_button.set_text("Manual")
+                    SimulationSettings.START_MODE = "Manual"
+                else:
+                    self.start_mode_button.set_text("Auto")
+                    SimulationSettings.START_MODE = "Auto"
+
             # Reset
             if event.ui_element == self.reset_button:
                 self.kill()
