@@ -12,6 +12,7 @@ import EndPoint
 import BackgroundController
 import ConfigControlsController
 import SimulationControlsController
+import SecurityController
 
 class States(enum.Enum):
     CONFIG = 0
@@ -36,6 +37,8 @@ class SimulationController(pygame.sprite.Sprite):
                                             theme_path="themes/theme.json")
     
         pygame.display.set_caption('Clay simulator (ver. 17.09.2022)')
+
+        self.security = SecurityController.Security()
        
         self.trajectory = Trajectory.Trajectory()
         self.state = States.CONFIG
@@ -75,13 +78,14 @@ class SimulationController(pygame.sprite.Sprite):
         return True if self.screen.get_size() != (Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT) else False
 
     def stateMachine(self) -> None:
-        while self.state != States.EXIT:
-            if self.state == States.CONFIG:
-                self.stateCONFIG()
-            elif self.state == States.SIMULATION:
-                self.stateSIMULATION()
-            elif self.state == States.RESET:
-                self.stateRESET()
+        if True == self.security.check():
+            while self.state != States.EXIT:
+                if self.state == States.CONFIG:
+                    self.stateCONFIG()
+                elif self.state == States.SIMULATION:
+                    self.stateSIMULATION()
+                elif self.state == States.RESET:
+                    self.stateRESET()
         print("Bye!")
         pygame.quit()
 
